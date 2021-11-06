@@ -3,8 +3,9 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Three.js の基本形(3) アニメーション＋カメラの移動</title>
+  <title>Three.js の基本形(3) アニメーション</title>
   <script src="../javascript/three_r55.js"></script> <!-- Three.js用ライブラリ -->
+  <script src="../javascript/TrackballControls_r55.js"></script><!-- トラックボールコントロール用ライブラリ -->
   <style>
     div#canvas-frame {
       width: 512px;
@@ -69,7 +70,34 @@
       //カメラの上ベクトルの設定
       camera.up.set(0, 0, 1);
       //カメラの中心位置ベクトルの設定
-      camera.lookAt({ x: 0, y: 0, z: 0 });
+      camera.lookAt({ x: 0, y: 0, z: 0 }); //トラックボール利用時は自動的に無効
+
+      //トラックボールオブジェクトの宣言
+      trackball = new THREE.TrackballControls(camera, canvasFrame);
+
+      //トラックボール動作範囲のサイズとオフセットの設定
+      trackball.screen.width = canvasFrame.clientWidth;                        //横幅
+      trackball.screen.height = canvasFrame.clientHeight;                      //縦幅
+      trackball.screen.offsetLeft = canvasFrame.getBoundingClientRect().left;  //左オフセット
+      trackball.screen.offsetTop = canvasFrame.getBoundingClientRect().top;    //右オフセット
+
+      //トラックボールによる回転無効化と回転速度の設定
+      trackball.noRotate = false;
+      trackball.rotateSpeed = 2.0;
+
+      //トラックボールによる拡大無効化と拡大速度の設定
+      trackball.noZoom = false;
+      trackball.zoomSpeed = 1.0;
+
+      //トラックボールによるカメラ中心移動の無効化と中心速度の設定
+      trackball.noPan = false;
+      trackball.panSpeed = 1.0;
+      trackball.target = new THREE.Vector3(0, 0, 10);
+
+      //トラックボールのスタティックムーブの有効化
+      trackball.staticMoving = true;
+      //トラックボールのダイナミックムーブ時の減衰定数
+      trackball.dynamicDampingFactor = 0.3;
     }
     ////////////////////////////////////////////////////////////////////
     // 光源初期化関数の定義
@@ -133,24 +161,18 @@
     ////////////////////////////////////////////////////////////////////
     // 無限ループ関数の定義
     ////////////////////////////////////////////////////////////////////
-    var step = 0;
+    //グローバル変数の宣言
+    var step = 0; //ステップ数
     function loop() {
+      //トラックボールによるカメラオブジェクトのプロパティの更新
+      trackball.update();
+
       //ステップ数のインクリメント
       step++;
       //各立方体の角度の変更
       cubes[0].rotation.set(step / 100, 0, 0);
       cubes[1].rotation.set(0, step / 100, 0);
       cubes[2].rotation.set(0, 0, step / 100);
-
-      //カメラ位置座標の計算
-      var cameraX = 100 * Math.cos(step / 100);
-      var cameraY = 100 * Math.sin(step / 100);
-      var cameraZ = 100 * Math.cos(step / 100);
-
-      //カメラ位置座標の変更
-      camera.position.set(cameraX, cameraY, cameraZ);
-      camera.up.set(0, 0, 1);
-      camera.lookAt({ x: 0, y: 0, z: 0 });
 
       //クリアーカラーで初期化
       renderer.clear();
