@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Three.js の基本形(2) 立方体の描画</title>
+  <title>Three.js の基本形(3) アニメーション＋カメラの移動</title>
   <script src="../javascript/three_r55.js"></script> <!-- Three.js用ライブラリ -->
   <style>
     div#canvas-frame {
@@ -30,7 +30,7 @@
       initCamera(); //カメラ初期化関数の実行
       initLight();  //光源初期化関数の実行
       initObject(); //オブジェクト初期化関数の実行
-      draw();       //描画実行関数の実行
+      loop();       //無限ループ関数の実行
     }
     ////////////////////////////////////////////////////////////////////
     // Three.js初期化関数の定義
@@ -65,7 +65,7 @@
       //カメラオブジェクトの生成
       camera = new THREE.PerspectiveCamera(45, canvasFrame.clientWidth / canvasFrame.clientHeight, 1, 10000);
       //カメラの位置の設定
-      camera.position.set(30, 30, 30);
+      camera.position.set(100, 50, 50);
       //カメラの上ベクトルの設定
       camera.up.set(0, 0, 1);
       //カメラの中心位置ベクトルの設定
@@ -89,35 +89,76 @@
     ////////////////////////////////////////////////////////////////////
     //グローバル変数の宣言
     var axis, //軸オブジェクト
-      cube; //立方体オブジェクト
+      cubes = []; //立方体オブジェクト
     function initObject() {
       //軸オブジェクトの生成
-      axis = new THREE.AxisHelper(50);
+      axis = new THREE.AxisHelper(100);
       //軸オブジェクトのシーンへの追加
       scene.add(axis);
       //軸オブジェクトの位置座標を設定
       axis.position.set(0, 0, 0);
 
+
       //形状オブジェクトの宣言と生成
       var geometry = new THREE.CubeGeometry(20, 20, 20);
       //材質オブジェクトの宣言と生成F
-      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, transparent: true, opacity: 0.5 });
+      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
       //立方体オブジェクトの生成
-      cube = new THREE.Mesh(geometry, material);
+      cubes[0] = new THREE.Mesh(geometry, material);
       //立方体オブジェクトのシーンへの追加
-      scene.add(cube);
+      scene.add(cubes[0]);
       //立方体オブジェクトの位置座標を設定
-      cube.position.set(0, 0, 0);
+      cubes[0].position.set(0, -30, 0);
+
+      //材質オブジェクトの宣言と生成F
+      var material = new THREE.MeshLambertMaterial({ color: 0x00FF00 });
+      //立方体オブジェクトの生成
+      cubes[1] = new THREE.Mesh(geometry, material);
+      //立方体オブジェクトのシーンへの追加
+      scene.add(cubes[1]);
+      //立方体オブジェクトの位置座標を設定
+      cubes[1].position.set(0, 0, 0);
+
+
+      //材質オブジェクトの宣言と生成F
+      var material = new THREE.MeshLambertMaterial({ color: 0x0000FF });
+      //立方体オブジェクトの生成
+      cubes[2] = new THREE.Mesh(geometry, material);
+      //立方体オブジェクトのシーンへの追加
+      scene.add(cubes[2]);
+      //立方体オブジェクトの位置座標を設定
+      cubes[2].position.set(0, 30, 0);
     }
 
     ////////////////////////////////////////////////////////////////////
-    // 描画関数の定義
+    // 無限ループ関数の定義
     ////////////////////////////////////////////////////////////////////
-    function draw() {
+    var step = 0;
+    function loop() {
+      //ステップ数のインクリメント
+      step++;
+      //各立方体の角度の変更
+      cubes[0].rotation.set(step / 100, 0, 0);
+      cubes[1].rotation.set(0, step / 100, 0);
+      cubes[2].rotation.set(0, 0, step / 100);
+
+      //カメラ位置座標の計算
+      var cameraX = 100 * Math.cos(step / 100);
+      var cameraY = 100 * Math.sin(step / 100);
+      var cameraZ = 100 * Math.cos(step / 100);
+
+      //カメラ位置座標の変更
+      camera.position.set(cameraX, cameraY, cameraZ);
+      camera.up.set(0, 0, 1);
+      camera.lookAt({ x: 0, y: 0, z: 0 });
+
       //クリアーカラーで初期化
       renderer.clear();
       //レンダリング
       renderer.render(scene, camera);
+
+      //「loop()」関数の呼び出し
+      requestAnimationFrame(loop);
     }
   </script>
 </head>
