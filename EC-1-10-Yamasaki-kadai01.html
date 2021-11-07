@@ -8,9 +8,9 @@
   <script src="../javascript/TrackballControls_r55.js"></script><!-- トラックボールコントロール用ライブラリ -->
   <style>
     div#canvas-frame {
-      width: 512px;
+      width: 700px;
       /* 横幅 */
-      height: 512px;
+      height: 700px;
       /* 縦幅 */
     }
   </style>
@@ -111,68 +111,53 @@
       directionalLight.position.set(50, 20, 100);
       //平行光源オブジェクトのシーンへの追加
       scene.add(directionalLight);
+      directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.7, 0);
+      directionalLight.position.set(-50, -20, -100);
+      scene.add(directionalLight);
+      // 環境光源の追加
     }
     ////////////////////////////////////////////////////////////////////
     // オブジェクト初期化関数の定義
     ////////////////////////////////////////////////////////////////////
     //グローバル変数の宣言
-    var axis, //軸オブジェクト
-      cubes = []; //立方体オブジェクト
+
+    var torus = [];
     function initObject() {
-      //軸オブジェクトの生成
-      axis = new THREE.AxisHelper(100);
-      //軸オブジェクトのシーンへの追加
-      scene.add(axis);
-      //軸オブジェクトの位置座標を設定
-      axis.position.set(0, 0, 0);
-
-
-      //形状オブジェクトの宣言と生成
-      var geometry = new THREE.CubeGeometry(20, 20, 20);
-      //材質オブジェクトの宣言と生成F
-      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
-      //立方体オブジェクトの生成
-      cubes[0] = new THREE.Mesh(geometry, material);
-      //立方体オブジェクトのシーンへの追加
-      scene.add(cubes[0]);
-      //立方体オブジェクトの位置座標を設定
-      cubes[0].position.set(0, -30, 0);
-
-      //材質オブジェクトの宣言と生成F
-      var material = new THREE.MeshLambertMaterial({ color: 0x00FF00 });
-      //立方体オブジェクトの生成
-      cubes[1] = new THREE.Mesh(geometry, material);
-      //立方体オブジェクトのシーンへの追加
-      scene.add(cubes[1]);
-      //立方体オブジェクトの位置座標を設定
-      cubes[1].position.set(0, 0, 0);
-
-
-      //材質オブジェクトの宣言と生成F
-      var material = new THREE.MeshLambertMaterial({ color: 0x0000FF });
-      //立方体オブジェクトの生成
-      cubes[2] = new THREE.Mesh(geometry, material);
-      //立方体オブジェクトのシーンへの追加
-      scene.add(cubes[2]);
-      //立方体オブジェクトの位置座標を設定
-      cubes[2].position.set(0, 30, 0);
+      var Cylinder = new THREE.Mesh(
+        new THREE.CylinderGeometry(3, 3, 30, 50),
+        new THREE.MeshPhongMaterial({
+          color: 0xFFFFFF
+        }));
+        var Cylinder2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(3, 3, 2, 50),
+        new THREE.MeshPhongMaterial({
+          color: 0xFF0000
+        }));
+      Cylinder.position.set(0,20,-5);
+      Cylinder2.position.set(0,4,-5);
+      scene.add(Cylinder);
+      scene.add(Cylinder2);
     }
 
     ////////////////////////////////////////////////////////////////////
     // 無限ループ関数の定義
     ////////////////////////////////////////////////////////////////////
     //グローバル変数の宣言
-    var step = 0; //ステップ数
+    var step = 0;
+    const torusNumber = 5;
+    const loopNumber = 40;
     function loop() {
       //トラックボールによるカメラオブジェクトのプロパティの更新
       trackball.update();
 
       //ステップ数のインクリメント
       step++;
-      //各立方体の角度の変更
-      cubes[0].rotation.set(step / 100, 0, 0);
-      cubes[1].rotation.set(0, step / 100, 0);
-      cubes[2].rotation.set(0, 0, step / 100);
+      for (var i = 0; i < torusNumber; i++) {
+        scene.remove(torus[i]);
+        torus[i] = new THREE.Mesh(new THREE.TorusGeometry((step + i * loopNumber) % (loopNumber * torusNumber) / 4, 5 / ((step + i * loopNumber) % (loopNumber * torusNumber)) * 10, 64, 16), new THREE.MeshLambertMaterial({ color: 0x6699FF }));
+        torus[i].position.set(0, 0, (step + i * loopNumber) % (loopNumber * torusNumber) / 2);
+        scene.add(torus[i]);
+      }
 
       //クリアーカラーで初期化
       renderer.clear();
