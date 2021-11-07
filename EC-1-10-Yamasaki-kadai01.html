@@ -144,8 +144,8 @@
     ////////////////////////////////////////////////////////////////////
     //グローバル変数の宣言
     var step = 0;
-    const torusNumber = 5;
-    const loopNumber = 40;
+    var torusNumber = 5;
+    var loopNumber = 40;
     function loop() {
       //トラックボールによるカメラオブジェクトのプロパティの更新
       trackball.update();
@@ -167,10 +167,21 @@
       //「loop()」関数の呼び出し
       requestAnimationFrame(loop);
     }
+
+    function changeTorus (number){
+      torusNumber +=number;
+    }
+    function changeLoopNumber(number){
+      loopNumber += number
+    }
   </script>
 </head>
 
 <body>
+  <input type="button" value="Torus +1" onclick="changeTorus(1);" />
+  <input type="button" value="Torus -1" onclick="changeTorus(-1);" />
+  <input type="button" value="Loop +1" onclick="changeLoopNumber(1);" />
+  <input type="button" value="Loop -1" onclick="changeLoopNumber(-1);" />
   <div id="canvas-frame"></div><!-- canvas要素を配置するdiv要素 -->
 </body>
 
