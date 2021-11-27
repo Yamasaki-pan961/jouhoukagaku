@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>三角関数</title>
+  <style>
+    @import "../stylesheet/jquery.jqplot.css";
+
+    div#canvas-frame {
+      width: 500px;
+      height: 400px;
+    }
+  </style>
+  <script src="../javascript/jquery-1.8.3.js"></script>
+  <script src="../javascript/jquery.jqplot_1.0.4.js"></script>
+  <script src="../javascript/plugins/jqplot.donutRenderer.js"></script>
+  <script src="../javascript/plugins/jqplot.pieRenderer.js"></script>
+  <script src="../javascript/plugins/jqplot.dateAxisRenderer.js"></script>
+  <script src="newly_confirmed_cases_daily.js"></script>
+  <script>
+    ////////////////////////////////////////////////////////////////////
+    // windowイベントの定義
+    ////////////////////////////////////////////////////////////////////
+    //HTML文書読み込み完了後に実行するイベントの定義
+    window.addEventListener("load", function () {
+      convertCSVtoArray(textData);
+      plotStart();  //jqPlotスタート関数の実行
+    });
+
+    var result = [];
+    var resultCounter = 0; // 最終的な二次元配列を入れるための配列
+    function convertCSVtoArray(str) { // 読み込んだCSVデータが文字列として渡される
+      var tmp = str.split("\n"); // 改行を区切り文字として行を要素とした配列を生成
+
+      // 各行ごとにカンマで区切った文字列を要素とした二次元配列を生成
+      for (var i = 1; i < tmp.length; ++i) {
+        var confirmedCasesDaily = tmp[i].split(',');
+        if (confirmedCasesDaily[1] === 'ALL') {
+          confirmedCasesDaily.splice(1, 1);
+          result[resultCounter] = confirmedCasesDaily;
+          resultCounter++;
+        }
+      } // 300yen
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    //jqPlotスタート関数
+    ////////////////////////////////////////////////////////////////////
+    function plotStart() {
+      var options = {
+        title: '新型コロナウィルス　新規陽性感染者数の推移（日別）',
+        axes: {
+          xaxis: {
+            renderer: $.jqplot.DateAxisRenderer,
+            label: '日付',
+            tickOptions: {
+              formatString: '%F',
+            }
+          },
+          yaxis: {
+            min: 0,
+            max: 30000,
+            tickInterval: 2000,
+            label: '新規陽性患者数'
+          }
+        },
+        series: [{ lineWidth: 2, markerOptions: { show: false } }]
+      };
+      var plot1 = $.jqplot('canvas-frame', [result], options);
+    }
+  </script>
+</head>
+
+<body>
+  <div id="canvas-frame"></div>
+  <p>データ引用元:
+    <a href="https://www.mhlw.go.jp/stf/covid-19/open-data.html" target="_blank">オープンデータ | 厚生労働省</a>
+  </p>
+</body>
+
+</html>
