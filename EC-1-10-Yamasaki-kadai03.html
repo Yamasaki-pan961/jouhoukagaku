@@ -1,3 +1,4 @@
+<!-- 3DCG_positionPlot2.htmlから変更 -->
 <!DOCTYPE html>
 <html>
 
@@ -53,9 +54,13 @@
     var restartFlag = false; //再計算フラグ
     var stopFlag = true;     //一時停止フラグ
 
-    //球クラスの定義
-    var Ball = function (parameter) {
+    //トラスクラスの定義
+    var Torus = function (parameter) {
       this.radius = parameter.radius; //半径
+      this.tube = parameter.tube; //チューブ半径
+      this.radialSegments = parameter.radialSegments; //トラスの頂点の数
+      this.tubularSegments = parameter.tubularSegments;//チューブの頂点の数
+      this.arc = parameter.arc;
       this.x = parameter.x;           //x座標
       this.y = parameter.y;           //y座標
       this.z = parameter.z;           //z座標
@@ -70,8 +75,9 @@
       data_y.push([0, this.y]);
       data_z.push([0, this.z]);
     };
-    //球オブジェクトの生成
-    var ball = new Ball({ radius: 5, x: 0, y: 0, z: 30 });
+    //パラメーターの作成
+    const params = { radius: 10, tube: 3, radialSegments: 20, tubularSegments: 20, arc: Math.Pi * 2, x: 0, y: 0, z: 30 };
+    var torus = new Torus(params);
 
     ////////////////////////////////////////////////////////////////////
     //jqPlotスタート関数
@@ -114,7 +120,7 @@
       $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
 
       //スライダーインターフェースの実装
-      var strs = ['x', 'y', 'z'];
+      var strs = ['x', 'y', 'z', 'polygon'];
       for (var i = 0; i < strs.length; i++) {
         var axis = strs[i];              //軸の取得
         var value = ball[axis]; //位置ベクトル
