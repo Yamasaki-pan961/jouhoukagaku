@@ -424,9 +424,17 @@
       //時刻の取得と出力
       document.getElementById("step").innerHTML = step;
 
-      //球オブジェクトの位置ベクトルを設定
+      scene.remove(torusObject);
+      var geometry = new THREE.TorusGeometry(torus.radius, torus.tube, torus.radialSegments, torus.tubularSegments, torus.arc);
+      //材質オブジェクトの宣言と生成
+      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
+      //球オブジェクトの生成
+      torusObject = new THREE.Mesh(geometry, material);
+      //球オブジェクトのシーンへの追加
+      scene.add(torusObject);
+      //球オブジェクトの影の生成元
+      torusObject.castShadow = true;
       torusObject.position.set(torus.x, torus.y, torus.z);
-
       //再スタートフラグのチェック
       if (restartFlag == true) {
         //各種計算パラメータの初期化
