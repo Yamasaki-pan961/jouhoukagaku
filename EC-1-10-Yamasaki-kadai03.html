@@ -76,7 +76,7 @@
       data_z.push([0, this.z]);
     };
     //パラメーターの作成
-    const params = { radius: 10, tube: 3, radialSegments: 20, tubularSegments: 20, arc: Math.Pi * 2, x: 0, y: 0, z: 30 };
+    const params = { radius: 10, tube: 3, radialSegments: 20, tubularSegments: 20, arc: Math.PI * 2, x: 10, y: 0, z: 30 };
     var torus = new Torus(params);
 
     ////////////////////////////////////////////////////////////////////
@@ -120,41 +120,80 @@
       $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
 
       //スライダーインターフェースの実装
-      var strs = ['x', 'y', 'z', 'polygon'];
-      for (var i = 0; i < strs.length; i++) {
-        var axis = strs[i];              //軸の取得
-        var value = ball[axis]; //位置ベクトル
-
-        //座標表示用input要素に値を代入
-        document.getElementById("input_" + axis).value = value; //id名「input_○」の要素の「value」属性に値を代入
-
-        $('#slider_' + strs[i]).slider({
+      var strs = ['x', 'y', 'z', 'radius', 'tube', 'radialSegments', 'tubularSegments', 'arc'];//パラメータのリスト
+      var sliderSettings = {
+        x: {
           min: -100,    //最小値の指定
           max: 100,     //最大値の指定
           step: 1,       //刻み幅の指定
-          value: value,  //現在の値を指定
-          slide: function (event, ui) { //スライドした時のイベントを登録
-            //スライダーの指定した値を取得する
-            var value = ui.value;
+        },
+        y: {
+          min: -100,    //最小値の指定
+          max: 100,     //最大値の指定
+          step: 1,       //刻み幅の指定
+        },
+        z: {
+          min: -100,    //最小値の指定
+          max: 100,     //最大値の指定
+          step: 1,       //刻み幅の指定
+        },
+        radius: {
+          min: 1,
+          max: 60,
+          step: 0.1,
+        },
+        tube: {
+          min: 0.1,
+          max: 60,
+          step: 0.1,
+        },
+        radialSegments: {
+          min: 2,
+          max: 30,
+          step: 1,
+        },
+        tubularSegments: {
+          min: 3,
+          max: 30,
+          step: 1,
+        },
+        arc: {
+          min: 0,
+          max: Math.PI * 2,
+          step: 0.01
+        }
 
-            //スライダーで指定した値を球の位置ベクトルとする
-            var axis = this.id.replace("slider_", "");     //id名から軸に変換（「slider_○」→「○」）
-            ball[axis] = value;
+      };
+      for (var i = 0; i < strs.length; i++) {
+        var target = strs[i]; //パラメータの取得
+        var value = torus[target]; //パラメータ値の取得
 
-            //スライダーで指定した値を座標表示用input要素に表示する
-            var id = this.id.replace("slider_", "input_"); //id名の書き換え（「slider_○」→「input_○」）
-            document.getElementById(id).value = value;     //id名「input_○」の要素の「value」属性に値を代入
-          }
-        });
+        //座標表示用input要素に値を代入
+        document.getElementById("input_" + target).value = value; //id名「input_○」の要素の「value」属性に値を代入
+        var setting = sliderSettings[target];
+        setting.value = value;
+        setting.slide = function (event, ui) { //スライドした時のイベントを登録
+          //スライダーの指定した値を取得する
+          var value = ui.value;
+
+          //スライダーで指定した値を球の位置ベクトルとする
+          var target = this.id.replace("slider_", "");     //id名から軸に変換（「slider_○」→「○」）
+          torus[target] = value;
+
+          //スライダーで指定した値を座標表示用input要素に表示する
+          var id = this.id.replace("slider_", "input_"); //id名の書き換え（「slider_○」→「input_○」）
+          document.getElementById(id).value = value;     //id名「input_○」の要素の「value」属性に値を代入
+        };
+        $('#slider_' + strs[i]).slider(setting);
 
         //input要素に値を入力した時のイベントを追加
-        document.getElementById("input_" + axis).addEventListener("change", function () {
+        document.getElementById("input_" + target).addEventListener("change", function () {
           //input要素に入力された値を取得する
           var value = parseFloat(this.value) || 0;
 
           //input要素に入力した値を球の位置ベクトルに代入する
-          var axis = this.id.replace("input_", ""); //id名から軸に変換（「input_○」→「○」）
-          ball[axis] = value;
+          var target = this.id.replace("input_", ""); //id名から軸に変換（「input_○」→「○」）
+          torus[target] = value;
 
           //スライダー位置をinput要素に入力した値にする
           var id = this.id.replace("input_", "slider_"); //id名の書き換え（「input_○」→「slider_○」）
@@ -485,6 +524,42 @@
             </td>
             <!-- 現在のz座標 -->
             <td><input type="text" value="" id="input_z" class="number"></td>
+          </tr>
+          <tr>
+            <td>radius</td>
+            <td>
+              <div id="slider_radius" class="slider"></div>
+            </td>
+            <td><input type="text" value="" id="input_radius" class="number"></td>
+          </tr>
+          <tr>
+          <tr>
+            <td>tube</td>
+            <td>
+              <div id="slider_tube" class="slider"></div>
+            </td>
+            <td><input type="text" value="" id="input_tube" class="number"></td>
+          </tr>
+          <tr>
+            <td>radialSegments</td>
+            <td>
+              <div id="slider_radialSegments" class="slider"></div>
+            </td>
+            <td><input type="text" value="" id="input_radialSegments" class="number"></td>
+          </tr>
+          <tr>
+            <td>tubularSegments</td>
+            <td>
+              <div id="slider_tubularSegments" class="slider"></div>
+            </td>
+            <td><input type="text" value="" id="input_tubularSegments" class="number"></td>
+          </tr>
+          <tr>
+            <td>arc</td>
+            <td>
+              <div id="slider_arc" class="slider"></div>
+            </td>
+            <td><input type="text" value="" id="input_arc" class="number"></td>
           </tr>
         </table>
         <!-- ボタン -->
