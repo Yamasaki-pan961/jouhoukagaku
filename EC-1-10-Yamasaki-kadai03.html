@@ -427,7 +427,7 @@
       scene.remove(torusObject);
       var geometry = new THREE.TorusGeometry(torus.radius, torus.tube, torus.radialSegments, torus.tubularSegments, torus.arc);
       //材質オブジェクトの宣言と生成
-      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
+      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000,wireframe:true });
       //球オブジェクトの生成
       torusObject = new THREE.Mesh(geometry, material);
       //球オブジェクトのシーンへの追加
