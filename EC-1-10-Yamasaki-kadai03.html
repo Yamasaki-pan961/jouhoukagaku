@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>仮想物理実験室</title>
+  <style>
+    /* 外部スタイルシートの読み込み */
+    @import "../stylesheet/jquery-ui-1.9.2.custom.css";
+    /* jQueryUI用CSS */
+    @import "../stylesheet/jquery.jqplot.css";
+    /* jqPlot用CSS */
+    @import "../stylesheet/laboratory_r2.css";
+    /* 仮想物理実験室用 CSS */
+  </style>
+  <!-- 外部JavaScriptファイルの読み込み -->
+  <script src="../javascript/jquery-1.8.3.js"></script> <!-- jQuery用ライブラリ -->
+  <script src="../javascript/jquery-ui-1.9.2.custom.js"></script> <!-- jQueryUI用ライブラリ -->
+  <script src="../javascript/three_r55.js"></script> <!-- Three.js用ライブラリ -->
+  <script src="../javascript/TrackballControls_r55.js"></script> <!-- トラックボールコントロール用ライブラリ -->
+  <script src="../javascript/jquery.jqplot_1.0.4.js"></script> <!-- jqPlot用ライブラリ             -->
+  <script src="../javascript/plugins/jqplot.canvasTextRenderer.js"></script> <!-- canvasテキスト描画用プラグイン -->
+  <script src="../javascript/plugins/jqplot.canvasAxisTickRenderer.js"></script> <!-- canvas目盛描画用プラグイン     -->
+  <script src="../javascript/plugins/jqplot.canvasAxisLabelRenderer.js"></script> <!-- canvas軸ラベル描画用プラグイン -->
+  <script src="../javascript/plugins/jqplot.logAxisRenderer.js"></script> <!-- 対数グラフ描画用プラグイン     -->
+  <script src="../javascript/plugins/jqplot.highlighter.js"></script> <!-- ハイライト表示用プラグイン     -->
+  <script src="../javascript/plugins/jqplot.cursor.js"></script> <!-- カーソル描画用プラグイン       -->
+  <script src="../javascript/plot2D_r5.js"></script> <!-- ２次元グラフ描画クラス         -->
+  <script>
+    ////////////////////////////////////////////////////////////////////
+    // windowイベントの定義
+    ////////////////////////////////////////////////////////////////////
+    //HTML文書読み込み完了後に実行するイベントの定義
+    //（すべてのHTML文書を読み込んでいなければ参照不能の要素があるため）
+    window.addEventListener("load", function () {
+      resizeTo(850, 610);
+      initEvent();  //イベントの準備
+      plotStart();  //jqPlotスタート関数の実行
+      threeStart(); //Three.jsのスタート関数の実行
+    });
+
+    /////////////////////////////////////////////////////////////////////////
+    // 物理系の定義
+    ///////////////////////////////////////////////////////////////////////////
+    var step = 0;    //ステップ数
+    var skip_data = 10;  //プロットデータ間引数
+
+    //時系列プロットデータ用配列
+    var data_x = []; //x座標
+    var data_y = []; //y座標
+    var data_z = []; //z座標
+    //一時停止フラグ
+    var restartFlag = false; //再計算フラグ
+    var stopFlag = true;     //一時停止フラグ
+
+    //球クラスの定義
+    var Ball = function (parameter) {
+      this.radius = parameter.radius; //半径
+      this.x = parameter.x;           //x座標
+      this.y = parameter.y;           //y座標
+      this.z = parameter.z;           //z座標
+
+      //プロットデータ配列の初期化
+      data_x = [];
+      data_y = [];
+      data_z = [];
+
+      //プロットデータ配列に初期値を代入
+      data_x.push([0, this.x]);
+      data_y.push([0, this.y]);
+      data_z.push([0, this.z]);
+    };
+    //球オブジェクトの生成
+    var ball = new Ball({ radius: 5, x: 0, y: 0, z: 30 });
+
+    ////////////////////////////////////////////////////////////////////
+    //jqPlotスタート関数
+    ////////////////////////////////////////////////////////////////////
+    function plotStart() {
+      //座標グラフ描画
+      plot2D_position = new Plot2D("canvas-frame_position");
+      //オプションの設定
+      plot2D_position.options.axesDefaults.tickOptions.formatString = ''; //目盛フォーマット
+      plot2D_position.options.axes.xaxis.label = "step";              //x軸ラベル
+      plot2D_position.options.axes.yaxis.label = "position";          //y軸ラベル
+      plot2D_position.options.axes.yaxis.labelOptions = { angle: -90 };   //ラベル回転角
+      plot2D_position.options.axes.xaxis.min = 0;                         //目盛の最小値
+      plot2D_position.options.legend.show = true;                         //凡例の有無
+      plot2D_position.options.legend.location = 'ne';                     //凡例の位置 
+      var series = []; //データ列オプション用配列
+      series.push({
+        showLine: true,              //線描画の有無
+        label: "x座標",              //凡例の設定
+        markerOptions: { show: true } //点描画の有無
+      });
+      series.push({
+        showLine: true,              //線描画の有無
+        label: "y座標",              //凡例の設定
+        markerOptions: { show: true } //点描画の有無
+      });
+      series.push({
+        showLine: true,              //線描画の有無
+        label: "z座標",              //凡例の設定
+        markerOptions: { show: true } //点描画の有無
+      });
+      plot2D_position.options.series = series; //データ列オプションの代入
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // イベント準備関数
+    ////////////////////////////////////////////////////////////////////
+    function initEvent() {
+      //タブ切り替えインターフェースの実装
+      $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
+
+      //スライダーインターフェースの実装
+      var strs = ['x', 'y', 'z'];
+      for (var i = 0; i < strs.length; i++) {
+        var axis = strs[i];              //軸の取得
+        var value = ball[axis]; //位置ベクトル
+
+        //座標表示用input要素に値を代入
+        document.getElementById("input_" + axis).value = value; //id名「input_○」の要素の「value」属性に値を代入
+
+        $('#slider_' + strs[i]).slider({
+          min: -100,    //最小値の指定
+          max: 100,     //最大値の指定
+          step: 1,       //刻み幅の指定
+          value: value,  //現在の値を指定
+          slide: function (event, ui) { //スライドした時のイベントを登録
+            //スライダーの指定した値を取得する
+            var value = ui.value;
+
+            //スライダーで指定した値を球の位置ベクトルとする
+            var axis = this.id.replace("slider_", "");     //id名から軸に変換（「slider_○」→「○」）
+            ball[axis] = value;
+
+            //スライダーで指定した値を座標表示用input要素に表示する
+            var id = this.id.replace("slider_", "input_"); //id名の書き換え（「slider_○」→「input_○」）
+            document.getElementById(id).value = value;     //id名「input_○」の要素の「value」属性に値を代入
+          }
+        });
+
+        //input要素に値を入力した時のイベントを追加
+        document.getElementById("input_" + axis).addEventListener("change", function () {
+          //input要素に入力された値を取得する
+          var value = parseFloat(this.value) || 0;
+
+          //input要素に入力した値を球の位置ベクトルに代入する
+          var axis = this.id.replace("input_", ""); //id名から軸に変換（「input_○」→「○」）
+          ball[axis] = value;
+
+          //スライダー位置をinput要素に入力した値にする
+          var id = this.id.replace("input_", "slider_"); //id名の書き換え（「input_○」→「slider_○」）
+          $('#' + id).slider({ value: value });          //スライダー位置を指定
+
+        });
+      }
+
+      ////ボタンクリックとタブ切り替え時のイベントの設定////////////////////////////////
+      //計算開始ボタン
+      document.getElementById("startButton").addEventListener("click", function () {
+        //再計算用フラグを設定
+        restartFlag = true;
+      });
+      //一時停止ボタン
+      document.getElementById("stopButton").addEventListener("click", function () {
+        //一時停止ボタンの状態により動作を指定
+        if (stopFlag) {
+          //一時停止フラグを解除
+          stopFlag = false;
+        } else {
+          //一時停止フラグを設定
+          stopFlag = true;
+        }
+      });
+
+      //1つ目のタブに切り替え時
+      document.getElementById("tabList").getElementsByTagName("a").item(0).addEventListener("click", function () {
+        //一時停止フラグを設定
+        //stopFlag = false;
+      });
+      //2つ目のタブに切り替え時
+      document.getElementById("tabList").getElementsByTagName("a").item(1).addEventListener("click", function () {
+        //「pushData」メソッドによるデータ列の初期化
+        plot2D_position.clearData();
+
+        //「pushData」メソッドによるデータの追加
+        plot2D_position.pushData(data_x); //x座標
+        plot2D_position.pushData(data_y); //y座標
+        plot2D_position.pushData(data_z); //z座標
+
+        plot2D_position.linerPlot();   //メソッドによる再描画
+
+        //一時停止フラグを設定
+        stopFlag = true;
+      });
+    }
+    ////////////////////////////////////////////////////////////////////
+    // Three.jsスタート関数の定義
+    ////////////////////////////////////////////////////////////////////
+    function threeStart() {
+      initThree();  //Three.js初期化関数の実行
+      initCamera(); //カメラ初期化関数の実行
+      initLight();  //光源初期化関数の実行
+      initObject(); //オブジェクト初期化関数の実行
+      loop();       //無限ループ関数の実行
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // Three.js初期化関数の定義
+    ////////////////////////////////////////////////////////////////////
+
+    //グローバル変数の宣言
+    var renderer,    //レンダラーオブジェクト
+      scene,       //シーンオブジェクト
+      canvasFrame; //キャンバスフレームのDOM要素
+    function initThree() {
+      //キャンバスフレームDOM要素の取得
+      canvasFrame = document.getElementById('canvas-frame');
+
+      //レンダラーオブジェクトの生成
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      if (!renderer) alert('Three.js の初期化に失敗しました');
+      //レンダラーのサイズの設定
+      renderer.setSize(canvasFrame.clientWidth, canvasFrame.clientHeight);
+      //キャンバスフレームDOM要素にcanvas要素を追加
+      canvasFrame.appendChild(renderer.domElement);
+
+      //レンダラークリアーカラーの設定
+      renderer.setClearColorHex(0xE1FCFF, 1.0);
+      //シャドーマップの利用
+      renderer.shadowMapEnabled = true;
+
+      //シーンオブジェクトの生成
+      scene = new THREE.Scene();
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // カメラ初期化関数の定義
+    ////////////////////////////////////////////////////////////////////
+
+    //グローバル変数の宣言
+    var camera,    //カメラオブジェクト
+      trackball; //トラックボールオブジェクト
+    function initCamera() {
+      //カメラオブジェクトの生成
+      camera = new THREE.PerspectiveCamera(45, canvasFrame.clientWidth / canvasFrame.clientHeight, 1, 10000);
+      //カメラの位置の設定
+      camera.position.set(100, 0, 30);
+      //カメラの上ベクトルの設定
+      camera.up.set(0, 0, 1);
+      //カメラの中心位置ベクトルの設定
+      camera.lookAt({ x: 0, y: 0, z: 100 }); //トラックボール利用時は自動的に無効
+
+      //トラックボールオブジェクトの宣言
+      trackball = new THREE.TrackballControls(camera, canvasFrame);
+
+      //トラックボール動作範囲のサイズとオフセットの設定
+      trackball.screen.width = canvasFrame.clientWidth;                        //横幅
+      trackball.screen.height = canvasFrame.clientHeight;                      //縦幅
+      trackball.screen.offsetLeft = canvasFrame.getBoundingClientRect().left;  //左オフセット
+      trackball.screen.offsetTop = canvasFrame.getBoundingClientRect().top;    //右オフセット
+
+      //トラックボールの回転無効化と回転速度の設定
+      trackball.noRotate = false;
+      trackball.rotateSpeed = 2.0;
+
+      //トラックボールの拡大無効化と拡大速度の設定
+      trackball.noZoom = false;
+      trackball.zoomSpeed = 1.0;
+
+      //トラックボールのカメラ中心移動の無効化と中心速度の設定
+      trackball.noPan = false;
+      trackball.panSpeed = 1.0;
+      trackball.target = new THREE.Vector3(0, 0, 10);
+
+      //トラックボールのスタティックムーブの有効化
+      trackball.staticMoving = true;
+      //トラックボールのダイナミックムーブ時の減衰定数
+      trackball.dynamicDampingFactor = 0.3;
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // 光源初期化関数の定義
+    ////////////////////////////////////////////////////////////////////
+
+    //グローバル変数の宣言
+    var directionalLight,  //平行光源オブジェクト
+      ambientLight;      //環境光オブジェクト
+    function initLight() {
+      //平行光源オブジェクトの生成
+      directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.0, 0);
+      //平行光源オブジェクトの位置の設定
+      directionalLight.position.set(100, 100, 500);
+      //平行光源オブジェクトの影の生成元
+      directionalLight.castShadow = true;
+      //平行光源オブジェクトのシーンへの追加
+      scene.add(directionalLight);
+
+      //平行光源オブジェクトのシャドウマップのサイズ
+      directionalLight.shadowMapWidth = 2048;
+      directionalLight.shadowMapHeight = 2048;
+
+      //環境光オブジェクトの生成
+      ambientLight = new THREE.AmbientLight(0x777777);
+      //環境光オブジェクトのシーンへの追加
+      scene.add(ambientLight);
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // オブジェクト初期化関数の定義
+    ////////////////////////////////////////////////////////////////////
+
+    //グローバル変数の宣言
+    var sphere; //球オブジェクト
+    function initObject() {
+      //形状オブジェクトの宣言と生成
+      var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
+      //材質オブジェクトの宣言と生成
+      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
+      //球オブジェクトの生成
+      sphere = new THREE.Mesh(geometry, material);
+      //球オブジェクトのシーンへの追加
+      scene.add(sphere);
+      //球オブジェクトの影の生成元
+      sphere.castShadow = true;
+
+      //床の描画
+      var yuka_n = 20,  //床一辺あたりのタイルの個数
+        yuka_w = 10; //タイルの一辺の長さ
+      for (var i = -yuka_n / 2; i <= yuka_n / 2; i++) {
+        for (var j = -yuka_n / 2; j <= yuka_n / 2; j++) {
+          //位置ベクトル
+          var x = j * yuka_w;
+          var y = i * yuka_w;
+          //一辺の長さ「yuka_w」の正方形の形状オブジェクトの宣言と生成
+          var geometry = new THREE.PlaneGeometry(yuka_w, yuka_w);
+          //材質オブジェクトの宣言
+          var material;
+          //市松模様とするための材質オブジェクトを生成
+          if (Math.abs(i + j) % 2 == 0) {
+            material = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
+          } else {
+            material = new THREE.MeshLambertMaterial({ color: 0x4d4d4d, ambient: 0x050505 });
+          }
+          //平面オブジェクトの宣言と生成
+          var plane = new THREE.Mesh(geometry, material);
+          //平面オブジェクトの位置の設定
+          plane.position.set(x, y, 0);
+          //平面オブジェクトに影を描画
+          plane.receiveShadow = true;
+          //平面オブジェクトのシーンへの追加
+          scene.add(plane);
+        }
+      }
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // 無限ループ関数の定義
+    ////////////////////////////////////////////////////////////////////
+    function loop() {
+      //トラックボールによるカメラオブジェクトのプロパティの更新
+      trackball.update();
+
+      //球体の時間発展
+      if (stopFlag == false) {
+        //ステップ数をインクリメント
+        step++;
+
+        //プロット用データの間引
+        if (step % skip_data == 0) {
+          //座標プロット用配列に追加
+          data_x.push([step, ball.x]); //x座標
+          data_y.push([step, ball.y]); //y座標
+          data_z.push([step, ball.z]); //z座標
+        }
+      }
+      //時刻の取得と出力
+      document.getElementById("step").innerHTML = step;
+
+      //球オブジェクトの位置ベクトルを設定
+      sphere.position.set(ball.x, ball.y, ball.z);
+
+      //再スタートフラグのチェック
+      if (restartFlag == true) {
+        //各種計算パラメータの初期化
+        step = 0;
+
+        //球クラスのパラメータの初期化
+        var parameter = { radius: 5 };
+        parameter.x = parseFloat(document.getElementById("input_x").value);
+        parameter.y = parseFloat(document.getElementById("input_y").value);
+        parameter.z = parseFloat(document.getElementById("input_z").value);
+
+        //球クラスのインスタンスの再生成
+        ball = new Ball(parameter);
+
+        //再計算フラグと一時停止フラグの解除
+        restartFlag = false;
+        stopFlag = false;
+
+        //ボタン表示文字列の変更
+        document.getElementById("startButton").value = "再計算スタート";
+      }
+      //ボタンの表示文字列の変更
+      if (stopFlag) {
+        document.getElementById("stopButton").value = "停止解除";
+      } else {
+        document.getElementById("stopButton").value = "一時停止";
+      }
+
+      //クリアーカラーで初期化
+      renderer.clear();
+      //レンダリング
+      renderer.render(scene, camera);
+
+      //「loop()」関数の呼び出し
+      requestAnimationFrame(loop);
+    }
+  </script>
+</head>
+
+<body>
+  <!-- タブ切り替えインターフェース領域 -->
+  <div id="tabs">
+
+    <!-- タブメニューリスト領域 -->
+    <ul id="tabList">
+      <li><a href="#tab1">３次元空間</a></li>
+      <li><a href="#tab2">時系列プロット</a></li>
+    </ul>
+
+    <!-- タブコンテンツ領域 -->
+    <div id="tab1" class="inner">
+      <!-- キャンバスフレーム領域-->
+      <div id="canvas-frame"></div>
+
+      <!-- コントローラー領域 -->
+      <div id="controller">
+
+        <h2>計算パラメータ</h2>
+        <table>
+          <tr>
+            <td>時間ステップ数：</td>
+            <!-- 現在のstep -->
+            <td colspan="2"><span id="step">0</span></td>
+          </tr>
+        </table>
+
+        <h3>位置ベクトル</h3>
+        <table>
+          <tr>
+            <!-- x座標 -->
+            <td>x</td>
+            <!-- x座標を指定するスライダー -->
+            <td>
+              <div id="slider_x" class="slider"></div>
+            </td>
+            <!-- 現在のx座標 -->
+            <td><input type="text" value="" id="input_x" class="number"></td>
+          </tr>
+          <tr>
+            <!-- y座標 -->
+            <td>y</td>
+            <!-- y座標を指定するスライダー -->
+            <td>
+              <div id="slider_y" class="slider"></div>
+            </td>
+            <!-- 現在のy座標 -->
+            <td><input type="text" value="" id="input_y" class="number"></td>
+          </tr>
+          <tr>
+            <!-- z座標 -->
+            <td>z</td>
+            <!-- z座標を指定するスライダー -->
+            <td>
+              <div id="slider_z" class="slider"></div>
+            </td>
+            <!-- 現在のz座標 -->
+            <td><input type="text" value="" id="input_z" class="number"></td>
+          </tr>
+        </table>
+        <!-- ボタン -->
+        <div id="buttonFrame">
+          <input type="button" value="計算スタート" id="startButton" />
+          <input type="button" value="一時停止" id="stopButton" />
+        </div>
+      </div>
+    </div>
+
+    <!-- タブコンテンツ領域 -->
+    <div id="tab2" class="inner">
+      <!-- キャンバスフレーム領域-->
+      <div id="canvas-frame_position" class="plotFrame"></div>
+    </div>
+
+  </div>
+</body>
+
+</html>
