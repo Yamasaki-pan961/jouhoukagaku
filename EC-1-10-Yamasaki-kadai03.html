@@ -358,18 +358,18 @@
     ////////////////////////////////////////////////////////////////////
 
     //グローバル変数の宣言
-    var sphere; //球オブジェクト
+    var torusObject; //トラスオブジェクト
     function initObject() {
       //形状オブジェクトの宣言と生成
-      var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
+      var geometry = new THREE.TorusGeometry(torus.radial, torus.tube, torus.radialSegments, torus.tubularSegments, torus.arc);
       //材質オブジェクトの宣言と生成
       var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
       //球オブジェクトの生成
-      sphere = new THREE.Mesh(geometry, material);
+      torusObject = new THREE.Mesh(geometry, material);
       //球オブジェクトのシーンへの追加
-      scene.add(sphere);
+      scene.add(torusObject);
       //球オブジェクトの影の生成元
-      sphere.castShadow = true;
+      torusObject.castShadow = true;
 
       //床の描画
       var yuka_n = 20,  //床一辺あたりのタイルの個数
@@ -416,16 +416,16 @@
         //プロット用データの間引
         if (step % skip_data == 0) {
           //座標プロット用配列に追加
-          data_x.push([step, ball.x]); //x座標
-          data_y.push([step, ball.y]); //y座標
-          data_z.push([step, ball.z]); //z座標
+          data_x.push([step, torus.x]); //x座標
+          data_y.push([step, torus.y]); //y座標
+          data_z.push([step, torus.z]); //z座標
         }
       }
       //時刻の取得と出力
       document.getElementById("step").innerHTML = step;
 
       //球オブジェクトの位置ベクトルを設定
-      sphere.position.set(ball.x, ball.y, ball.z);
+      torusObject.position.set(torus.x, torus.y, torus.z);
 
       //再スタートフラグのチェック
       if (restartFlag == true) {
@@ -439,7 +439,7 @@
         parameter.z = parseFloat(document.getElementById("input_z").value);
 
         //球クラスのインスタンスの再生成
-        ball = new Ball(parameter);
+        torus = new Torus(parameter);
 
         //再計算フラグと一時停止フラグの解除
         restartFlag = false;
