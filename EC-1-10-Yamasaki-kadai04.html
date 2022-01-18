@@ -49,76 +49,19 @@
     var g = 9.8;      //重力定数
 
     //Plot2D用オブジェクト
-    var plot2D_position; //位置ベクトル
-    var plot2D_velocity; //速度ベクトル
-
-    //時系列プロットデータ用配列
-    var data_x = [];  //x座標
-    var data_y = [];  //y座標
-    var data_z = [];  //z座標
-    var data_vx = []; //vx座標
-    var data_vy = []; //vy座標
-    var data_vz = []; //vz座標
-    var data_kinetic = [];   //運動エネルギー
-    var data_potential = []; //ポテンシャルエネルギー
-    var data_energy = [];    //力学的エネルギー
+    let plot2D_position; //位置ベクトル
+    let plot2D_velocity; //速度ベクトル
+    let plot2D_energy;
 
     //一時停止フラグ
     var restartFlag = false; //再計算フラグ
     var stopFlag = true;     //一時停止フラグ
-
+    let isControl = true;
     ///////////////////////////////////
     // 球クラスの定義
     ///////////////////////////////////
     var Ball = function (parameter) {
-      //半径
-      this.radius = parameter.radius;
-      //質量
-      this.mass = parameter.mass;
-
-      //位置ベクトル
-      this.x = parameter.x;
-      this.y = parameter.y;
-      this.z = parameter.z;
-
-      //速度ベクトル
-      this.vx = parameter.vx;
-      this.vy = parameter.vy;
-      this.vz = parameter.vz;
-
-      //前時刻の位置ベクトル
-      this.x_1;
-      this.y_1;
-      this.z_1;
-
-      //初期位置の計算
-      this.calculateInitialCondition(dt);
-
-      //プロットデータ配列の初期化
-      data_x = [];
-      data_y = [];
-      data_z = [];
-      data_vx = [];
-      data_vy = [];
-      data_vz = [];
-      data_kinetic = [];
-      data_potential = [];
-      data_energy = [];
-
-      //プロットデータ配列に初期値を代入
-      data_x.push([0, this.x]);
-      data_y.push([0, this.y]);
-      data_z.push([0, this.z]);
-      data_vx.push([0, this.vx]);
-      data_vy.push([0, this.vy]);
-      data_vz.push([0, this.vz]);
-
-      //初期力学的エネルギーの計算とプロットデータ配列に初期値を代入
-      var energy = this.calculateEnergy();
-      data_kinetic.push([0, energy.kinetic]);
-      data_potential.push([0, energy.potential]);
-      data_energy.push([0, energy.kinetic + energy.potential]);
-
+      this.set(parameter);
     };
     Ball.prototype = {
       constructor: Ball, //コンストラクタ
@@ -127,7 +70,7 @@
       timeEvolution: function (dt) {
 
         //力の取得
-        f = this.calculateForce();
+        const f = this.calculateForce();
 
         //加速度ベクトルの更新
         this.ax = f.x / this.mass;
@@ -171,7 +114,7 @@
       //ベルレ法による必要な初期値の計算
       calculateInitialCondition: function (dt) {
         //力の取得
-        f = this.calculateForce();
+        const f = this.calculateForce();
         //加速度ベクトルの取得
         this.ax = f.x / this.mass;
         this.ay = f.y / this.mass;
@@ -191,16 +134,75 @@
         var potential = this.mass * g * this.z_1;
         //力学的エネルギーをオブジェクトで返す
         return { kinetic: kinetic, potential: potential };
+      },
+      set: function (parameter) {
+        //半径
+        this.radius = parameter.radius;
+        //質量
+        this.mass = parameter.mass;
+
+        //位置ベクトル
+        this.x = parameter.x;
+        this.y = parameter.y;
+        this.z = parameter.z;
+
+        //速度ベクトル
+        this.vx = parameter.vx;
+        this.vy = parameter.vy;
+        this.vz = parameter.vz;
+
+        //前時刻の位置ベクトル
+        this.x_1;
+        this.y_1;
+        this.z_1;
+
+        //初期位置の計算
+        this.calculateInitialCondition(dt);
+
+        //時系列プロットデータ用配列
+        this.data_x = [];  //x座標
+        this.data_y = [];  //y座標
+        this.data_z = [];  //z座標
+        this.data_vx = []; //vx座標
+        this.data_vy = []; //vy座標
+        this.data_vz = []; //vz座標
+        this.data_kinetic = [];   //運動エネルギー
+        this.data_potential = []; //ポテンシャルエネルギー
+        this.data_energy = [];    //力学的エネルギー
+
+        //プロットデータ配列に初期値を代入
+        this.data_x.push([0, this.x]);
+        this.data_y.push([0, this.y]);
+        this.data_z.push([0, this.z]);
+        this.data_vx.push([0, this.vx]);
+        this.data_vy.push([0, this.vy]);
+        this.data_vz.push([0, this.vz]);
+
+        //初期力学的エネルギーの計算とプロットデータ配列に初期値を代入
+        var energy = this.calculateEnergy();
+        this.data_kinetic.push([0, energy.kinetic]);
+        this.data_potential.push([0, energy.potential]);
+        this.data_energy.push([0, energy.kinetic + energy.potential]);
+
       }
     };
 
     //球クラスのインスタンスの生成
-    var ball = new Ball({
-      radius: 5,  //球の半径
-      mass: 1,                //質量
-      x: 0, y: 0, z: 50,     //位置ベクトル
-      vx: 0, vy: 0, vz: 0    //速度ベクトル
-    });
+    var balls = [
+      new Ball({
+        radius: 5,  //球の半径
+        mass: 1,                //質量
+        x: 0, y: 10, z: 30,     //位置ベクトル
+        vx: 0, vy: 0, vz: 0    //速度ベクトル
+      }),
+      new Ball({
+        radius: 5,  //球の半径
+        mass: 1,                //質量
+        x: 10, y: 0, z: 20,     //位置ベクトル
+        vx: 0, vy: 0, vz: 0    //速度ベクトル
+      }),
+
+    ];
 
     ////////////////////////////////////////////////////////////////////
     //jqPlotスタート関数
@@ -217,21 +219,24 @@
       plot2D_position.options.legend.show = true;                         //凡例の有無
       plot2D_position.options.legend.location = 'ne';                     //凡例の位置 
       var series = []; //データ列オプション用配列
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "x座標",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "y座標",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "z座標",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
+
+      for (let index in balls) {
+        series.push({
+          showLine: true,              //線描画の有無
+          label: `x座標[${index}]`,              //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+        series.push({
+          showLine: true,              //線描画の有無
+          label: `y座標[${index}]`,              //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+        series.push({
+          showLine: true,              //線描画の有無
+          label: `z座標[${index}]`,              //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+      }
       plot2D_position.options.series = series; //データ列オプションの代入
 
       //速度グラフ描画
@@ -244,22 +249,24 @@
       plot2D_velocity.options.axes.xaxis.min = 0;                         //目盛の最小値
       plot2D_velocity.options.legend.show = true;                         //凡例の有無
       plot2D_velocity.options.legend.location = 'ne';                     //凡例の位置 
-      var series = []; //データ列オプション用配列
-      series.push({
-        showLine: true,           //線描画の有無
-        label: "vx",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,            //線描画の有無
-        label: "vy",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,           //線描画の有無
-        label: "vz",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
+      series = []; //データ列オプション用配列
+      for (let index in balls) {
+        series.push({
+          showLine: true,           //線描画の有無
+          label: `vx[${index}]`,              //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+        series.push({
+          showLine: true,            //線描画の有無
+          label: `vy[${index}]`,              //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+        series.push({
+          showLine: true,           //線描画の有無
+          label: `vz[${index}]`,              //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+      }
       plot2D_velocity.options.series = series; //データ列オプションの代入
 
 
@@ -272,67 +279,111 @@
       plot2D_energy.options.axes.xaxis.min = 0;
       plot2D_energy.options.legend.show = true;      //凡例の有無
       plot2D_energy.options.legend.location = 'ne';  //凡例の位置 
-      var series = []; //データ列オプション用配列
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "運動エネルギー",     //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "ポテンシャルエネルギー", //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,               //線描画の有無
-        label: "力学的エネルギー",    //凡例の設定
-        markerOptions: { show: false } //点描画の有無
-      });
+      series = []; //データ列オプション用配列
+      for (let index in balls) {
+        series.push({
+          showLine: true,              //線描画の有無
+          label: `運動エネルギー[${index}]`,     //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+        series.push({
+          showLine: true,              //線描画の有無
+          label: `ポテンシャルエネルギー[${index}]`, //凡例の設定
+          markerOptions: { show: true } //点描画の有無
+        });
+        series.push({
+          showLine: true,               //線描画の有無
+          label: `力学的エネルギー[${index}]`,    //凡例の設定
+          markerOptions: { show: false } //点描画の有無
+        });
+      }
       plot2D_energy.options.series = series;
     }
 
     ////////////////////////////////////////////////////////////////////
     // イベント準備関数
     ////////////////////////////////////////////////////////////////////
-    function initEvent() {
-      //タブ切り替えインターフェースの実装
-      $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
+    function createBallInterface(ball, count) {
+      let interface = document.getElementById('ball_interface');
+      let table = document.createElement('table');
+      table.style = "margin:10px;";
+      table.setAttribute('id', `ball_interface_${count}`);
+      let caption = document.createElement('caption');
+      caption.innerHTML = `Ball[${count}]`;
+      table.appendChild(caption);
 
-      //スライダーインターフェースの実装
       var strs = ['x', 'y', 'z', 'vx', 'vy', 'vz'];
       for (var i = 0; i < strs.length; i++) {
-        var axis = strs[i];     //軸の取得
-        var value = ball[axis]; //位置ベクトル
-
-        //座標表示用input要素に値を代入
-        document.getElementById("input_" + axis).value = value; //id名「input_○」の要素の「value」属性に値を代入
-
-        $('#slider_' + strs[i]).slider({
+        var target = strs[i];
+        const setting = {
           min: -100,    //最小値の指定
           max: 100,     //最大値の指定
           step: 1,       //刻み幅の指定
-          value: value,  //現在の値を指定
-          slide: function (event, ui) { //スライドした時のイベントを登録
-            //スライダーの指定した値を取得する
-            var value = ui.value;
-
-            //スライダーで指定した値を座標表示用input要素に表示する
-            var id = this.id.replace("slider_", "input_"); //id名の書き換え（「slider_○」→「input_○」）
-            document.getElementById(id).value = value;     //id名「input_○」の要素の「value」属性に値を代入
-          }
-        });
-
-        //input要素に値を入力した時のイベントを追加
-        document.getElementById("input_" + axis).addEventListener("change", function () {
-          //input要素に入力された値を取得する
-          var value = parseFloat(this.value) || 0;
-
-          //スライダー位置をinput要素に入力した値にする
-          var id = this.id.replace("input_", "slider_"); //id名の書き換え（「input_○」→「slider_○」）
-          $('#' + id).slider({ value: value });          //スライダー位置を指定
-
-        });
+        }
+        table.appendChild(
+          createTableRow(target, ball, count, setting));
       }
+      table.appendChild(
+        createTableRow(`radius`, ball, count, { min: 0.1, max: 30, step: 0.1 }));
+      table.appendChild(
+        createTableRow(`mass`, ball, count, { min: 1, max: 100, step: 1 },));
+
+      interface.appendChild(table);
+    }
+
+    function createTableRow(target, ball, count, setting) {
+      const value = ball[target];
+      let text = document.createElement("p");
+      text.innerText = target;
+      let elements = [text];
+      const id = `${target}_${count}`;
+      let slider = document.createElement('div');
+      slider.setAttribute('id', `slider_${id}`);
+
+      setting.value = value;
+      setting.slide = function (event, ui) {
+        var value = ui.value;
+        var id = this.id.replace("slider_", "input_");
+        document.getElementById(id).value = value;
+      }
+      slider.style = "width: 120px;";
+      elements.push(slider);
+
+      let input = document.createElement('input');
+      input.setAttribute('id', `input_${id}`);
+      input.setAttribute('class', `number`);
+      input.setAttribute('type', `text`);
+      input.value = value;
+      input.style = "width:20px";
+
+      $(slider).slider(setting);
+      input.addEventListener("change", function () {
+        //input要素に入力された値を取得する
+        var value = parseFloat(this.value) || 0;
+
+        //スライダー位置をinput要素に入力した値にする
+        var id = this.id.replace("input_", "slider_"); //id名の書き換え（「input_○」→「slider_○」）
+        $('#' + id).slider({ value: value });          //スライダー位置を指定
+
+      });
+      elements.push(input);
+
+      let tr = document.createElement("tr");
+      for (let index in elements) {
+        let td = document.createElement("td");
+        td.appendChild(elements[index]);
+        tr.appendChild(td);
+      }
+      return tr;
+    }
+
+    function initEvent() {
+      //タブ切り替えインターフェースの実装
+      $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
+      for (let index in balls) {
+        createBallInterface(balls[index], index);
+      }
+
 
       //描画間引数「skip」の指定
       document.getElementById("input_skip").value = skip;
@@ -347,22 +398,6 @@
 
           //スライダーで指定した値を座標表示用input要素に表示する
           document.getElementById("input_skip").value = value;
-        }
-      });
-
-      //質量「mass」の指定
-      document.getElementById("input_mass").value = ball.mass;
-      $('#slider_mass').slider({
-        min: 0,           //最小値の指定
-        max: 10,          //最大値の指定
-        step: 0.1,        //刻み幅の指定
-        value: ball.mass, //現在の値を指定
-        slide: function (event, ui) { //スライドした時のイベントを登録
-          //スライダーの指定した値を取得する
-          var value = ui.value;
-
-          //スライダーで指定した値を座標表示用input要素に表示する
-          document.getElementById("input_mass").value = value;
         }
       });
       //重力定数「g」の指定
@@ -389,6 +424,7 @@
       document.getElementById("startButton").addEventListener("click", function () {
         //再計算用フラグを設定
         restartFlag = true;
+        isControl = false;
       });
       //一時停止ボタン
       document.getElementById("stopButton").addEventListener("click", function () {
@@ -399,7 +435,39 @@
         } else {
           //一時停止フラグを設定
           stopFlag = true;
+          isControl = false;
         }
+      });
+
+      document.getElementById("resetButton").addEventListener("click", function () {
+        isControl = true;
+        for (let index in balls) {
+          const strs = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'radius', 'mass'];
+          var parameter = {};
+          for (let s in strs) {
+            const id = `input_${strs[s]}_${index}`
+            parameter[strs[s]] = parseFloat(document.getElementById(id).value);
+          }
+          //球クラスのインスタンスの再生成
+          balls[index].set(parameter);
+        }
+
+      });
+      document.getElementById("incrementButton").addEventListener("click", function () {
+        const ball = new Ball({
+          radius: 5,  //球の半径
+          mass: 1,                //質量
+          x: balls.length * 10, y: 10, z: 30,     //位置ベクトル
+          vx: 0, vy: 0, vz: 0    //速度ベクトル
+        })
+        balls.push(ball);
+        createBallInterface(ball, balls.length-1);
+      });
+
+      document.getElementById("decrementButton").addEventListener("click", function () {
+        document.getElementById(`ball_interface_${balls.length-1}`).remove();
+        scene.remove(spheres[balls.length-1]);
+        balls.pop();
       });
 
       //1つ目のタブに切り替え時
@@ -411,12 +479,14 @@
       document.getElementById("tabList").getElementsByTagName("a").item(1).addEventListener("click", function () {
         //「pushData」メソッドによるデータ列の初期化
         plot2D_position.clearData();
-
+        plotStart();
         //「pushData」メソッドによるデータの追加
-        plot2D_position.pushData(data_x); //x座標
-        plot2D_position.pushData(data_y); //y座標
-        plot2D_position.pushData(data_z); //z座標
-
+        for (let index in balls) {
+          const ball = balls[index];
+          plot2D_position.pushData(ball.data_x); //x座標
+          plot2D_position.pushData(ball.data_y); //y座標
+          plot2D_position.pushData(ball.data_z); //z座標
+        }
         plot2D_position.linerPlot();   //メソッドによる再描画
 
         //一時停止フラグを設定
@@ -428,10 +498,12 @@
         plot2D_velocity.clearData();
 
         //「pushData」メソッドによるデータの追加
-        plot2D_velocity.pushData(data_vx); //vx
-        plot2D_velocity.pushData(data_vy); //vy
-        plot2D_velocity.pushData(data_vz); //vz
-
+        for (let index in balls) {
+          const ball = balls[index];
+          plot2D_velocity.pushData(ball.data_vx); //vx
+          plot2D_velocity.pushData(ball.data_vy); //vy
+          plot2D_velocity.pushData(ball.data_vz); //vz
+        }
         plot2D_velocity.linerPlot();   //メソッドによる再描画
 
         //一時停止フラグを設定
@@ -442,9 +514,12 @@
         plot2D_energy.clearData();
 
         //「pushData」メソッドによるデータの追加
-        plot2D_energy.pushData(data_kinetic);   //運動エネルギー
-        plot2D_energy.pushData(data_potential); //ポテンシャルエネルギー
-        plot2D_energy.pushData(data_energy);    //力学的エネルギー
+        for (let index in balls) {
+          const ball = balls[index];
+          plot2D_energy.pushData(ball.data_kinetic);   //運動エネルギー
+          plot2D_energy.pushData(ball.data_potential); //ポテンシャルエネルギー
+          plot2D_energy.pushData(ball.data_energy);    //力学的エネルギー
+        }
         plot2D_energy.linerPlot();              //メソッドによる再描画
 
         //ボタンの表示文字列の変更
@@ -570,18 +645,21 @@
     ////////////////////////////////////////////////////////////////////
 
     //グローバル変数の宣言
-    var sphere; //球オブジェクト
+    var spheres = []; //球オブジェクト
     function initObject() {
-      //形状オブジェクトの宣言と生成
-      var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
       //材質オブジェクトの宣言と生成
       var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
-      //球オブジェクトの生成
-      sphere = new THREE.Mesh(geometry, material);
-      //球オブジェクトのシーンへの追加
-      scene.add(sphere);
-      //球オブジェクトの影の生成元
-      sphere.castShadow = true;
+
+      for (let index in balls) {
+        //形状オブジェクトの宣言と生成
+        //球オブジェクトの生成
+        var geometry = new THREE.SphereGeometry(balls[index].radius, 20, 20);
+        spheres.push(new THREE.Mesh(geometry, material));
+        //球オブジェクトのシーンへの追加
+        scene.add(spheres[index]);
+        //球オブジェクトの影の生成元
+        spheres[index].castShadow = true;
+      }
 
       //床の描画
       var yuka_n = 20,  //床一辺あたりのタイルの個数
@@ -592,9 +670,8 @@
           var x = j * yuka_w;
           var y = i * yuka_w;
           //一辺の長さ「yuka_w」の正方形の形状オブジェクトの宣言と生成
-          var geometry = new THREE.PlaneGeometry(yuka_w, yuka_w);
+          geometry = new THREE.PlaneGeometry(yuka_w, yuka_w);
           //材質オブジェクトの宣言
-          var material;
           //市松模様とするための材質オブジェクトを生成
           if (Math.abs(i + j) % 2 == 0) {
             material = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
@@ -620,36 +697,61 @@
       //トラックボールによるカメラオブジェクトのプロパティの更新
       trackball.update();
 
+      if (isControl) {
+        for (let index in balls) {
+          const strs = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'radius', 'mass'];
+          var parameter = {};
+          for (let s in strs) {
+            const id = `input_${strs[s]}_${index}`
+            parameter[strs[s]] = parseFloat(document.getElementById(id).value);
+          }
+          //球クラスのインスタンスの再生成
+          balls[index].set(parameter);
+        }
+
+      }
       //時刻の取得
       var time = step * dt;
       if (stopFlag == false) {
         for (var k = 0; k < skip; k++) {
           step++;
           time = step * dt;
+          for (let index in balls) {
+            let ball = balls[index];
+            //球体の時間発展
+            ball.timeEvolution(dt);
 
-          //球体の時間発展
-          ball.timeEvolution(dt);
-
-          if (step % (skip * skip_data) == 0) {
-            //プロットデータ配列にデータを追加
-            data_x.push([time, ball.x]); //x座標
-            data_y.push([time, ball.y]); //y座標
-            data_z.push([time, ball.z]); //z座標
-            data_vx.push([time, ball.vx]); //vx
-            data_vy.push([time, ball.vy]); //vy
-            data_vz.push([time, ball.vz]); //vz
-            var energy = ball.calculateEnergy();
-            data_kinetic.push([time, energy.kinetic]);
-            data_potential.push([time, energy.potential]);
-            data_energy.push([time, energy.kinetic + energy.potential]);
+            if (step % (skip * skip_data) == 0) {
+              //プロットデータ配列にデータを追加
+              ball.data_x.push([time, ball.x]); //x座標
+              ball.data_y.push([time, ball.y]); //y座標
+              ball.data_z.push([time, ball.z]); //z座標
+              ball.data_vx.push([time, ball.vx]); //vx
+              ball.data_vy.push([time, ball.vy]); //vy
+              ball.data_vz.push([time, ball.vz]); //vz
+              var energy = ball.calculateEnergy();
+              ball.data_kinetic.push([time, energy.kinetic]);
+              ball.data_potential.push([time, energy.potential]);
+              ball.data_energy.push([time, energy.kinetic + energy.potential]);
+            }
+            balls[index] = ball;
           }
         }
       }
       //時刻の取得と出力
       document.getElementById("time").innerHTML = time.toFixed(2);
 
+      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
+
       //球オブジェクトの位置ベクトルを設定
-      sphere.position.set(ball.x, ball.y, ball.z);
+      for (let index in balls) {
+        const ball = balls[index];
+        scene.remove(spheres[index]);
+        var geometry = new THREE.SphereGeometry(balls[index].radius, 20, 20);
+        spheres[index] = new THREE.Mesh(geometry, material);
+        scene.add(spheres[index]);
+        spheres[index].position.set(ball.x, ball.y, ball.z);
+      }
 
       //再スタートフラグのチェック
       if (restartFlag == true) {
@@ -660,30 +762,30 @@
         g = parseFloat(document.getElementById("input_g").value);
 
         //球クラスのパラメータの初期化
-        var parameter = { radius: 5 };
-        parameter.mass = parseFloat(document.getElementById("input_mass").value);
-        parameter.x = parseFloat(document.getElementById("input_x").value);
-        parameter.y = parseFloat(document.getElementById("input_y").value);
-        parameter.z = parseFloat(document.getElementById("input_z").value);
-        parameter.vx = parseFloat(document.getElementById("input_vx").value);
-        parameter.vy = parseFloat(document.getElementById("input_vy").value);
-        parameter.vz = parseFloat(document.getElementById("input_vz").value);
-
-        //球クラスのインスタンスの再生成
-        ball = new Ball(parameter);
+        for (let index in balls) {
+          const strs = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'radius', 'mass'];
+          parameter = {};
+          for (let s in strs) {
+            const id = `input_${strs[s]}_${index}`
+            parameter[strs[s]] = parseFloat(document.getElementById(id).value);
+          }
+          //球クラスのインスタンスの再生成
+          balls[index].set(parameter);
+        }
 
         //再計算フラグと一時停止フラグの解除
         restartFlag = false;
         stopFlag = false;
-
         //ボタン表示文字列の変更
         document.getElementById("startButton").value = "再計算スタート";
       }
       //ボタンの表示文字列の変更
       if (stopFlag) {
-        document.getElementById("stopButton").value = "停止解除";
+        document.getElementById("resetButton").style = 'visibility:visible;';
+        document.getElementById("stopButton").style = 'visibility:hidden;';
       } else {
-        document.getElementById("stopButton").value = "一時停止";
+        document.getElementById("resetButton").style = 'visibility:hidden;';
+        document.getElementById("stopButton").style = 'visibility:visible;';
       }
 
       //クリアーカラーで初期化
@@ -761,81 +863,15 @@
             <td><input type="text" value="" id="input_skip" class="number"></td>
           </tr>
         </table>
-
-        <h3>位置ベクトル</h3>
-        <table>
-          <tr>
-            <!-- x座標 -->
-            <td>x</td>
-            <!-- x座標を指定するスライダー -->
-            <td>
-              <div id="slider_x" class="slider"></div>
-            </td>
-            <!-- 現在のx座標 -->
-            <td><input type="text" value="" id="input_x" class="number"></td>
-          </tr>
-          <tr>
-            <!-- y座標 -->
-            <td>y</td>
-            <!-- y座標を指定するスライダー -->
-            <td>
-              <div id="slider_y" class="slider"></div>
-            </td>
-            <!-- 現在のy座標 -->
-            <td><input type="text" value="" id="input_y" class="number"></td>
-          </tr>
-          <tr>
-            <!-- z座標 -->
-            <td>z</td>
-            <!-- z座標を指定するスライダー -->
-            <td>
-              <div id="slider_z" class="slider"></div>
-            </td>
-            <!-- 現在のz座標 -->
-            <td><input type="text" value="" id="input_z" class="number"></td>
-          </tr>
-        </table>
-
-        <h3>速度ベクトル</h3>
-        <table>
-          <tr>
-            <!-- 速度のx成分 -->
-            <td>vx</td>
-            <!-- vxを指定するスライダー -->
-            <td>
-              <div id="slider_vx" class="slider"></div>
-            </td>
-            <!-- 現在のvx -->
-            <td><input type="text" value="" id="input_vx" class="number"></td>
-          </tr>
-          <tr>
-            <!-- 速度のy成分 -->
-            <td>vy</td>
-            <!-- vyを指定するスライダー -->
-            <td>
-              <div id="slider_vy" class="slider"></div>
-            </td>
-            <!-- 現在のvy -->
-            <td><input type="text" value="" id="input_vy" class="number"></td>
-          </tr>
-          <tr>
-            <!-- 速度のz成分 -->
-            <td>vz</td>
-            <!-- vzを指定するスライダー -->
-            <td>
-              <div id="slider_vz" class="slider"></div>
-            </td>
-            <!-- 現在のvz -->
-            <td><input type="text" value="" id="input_vz" class="number"></td>
-          </tr>
-        </table>
-
         <!-- ボタン -->
         <div id="buttonFrame">
           <input type="button" value="計算開始" id="startButton" />
           <input type="button" value="一時停止" id="stopButton" />
-        </div>
+          <input type="button" value="リセット" id="resetButton" />
+          <input type="button" value="ボール +1" id="incrementButton" style="display: block;"/>
+          <input type="button" value="ボール -1" id="decrementButton" style="display: block;"/>
 
+        </div>
       </div>
     </div>
 
@@ -854,8 +890,8 @@
       <!-- キャンバスフレーム領域-->
       <div id="canvas-frame_energy" class="plotFrame"></div>
     </div>
-
   </div>
+  <div id="ball_interface" style="display: flex; justify-content: center;"></div>
 </body>
 
 </html>
