@@ -51,6 +51,7 @@
     //Plot2D用オブジェクト
     var plot2D_position; //位置ベクトル
     var plot2D_velocity; //速度ベクトル
+    let plot2D_energy;
 
     //時系列プロットデータ用配列
     var data_x = [];  //x座標
@@ -127,7 +128,7 @@
       timeEvolution: function (dt) {
 
         //力の取得
-        f = this.calculateForce();
+        const f = this.calculateForce();
 
         //加速度ベクトルの更新
         this.ax = f.x / this.mass;
@@ -171,7 +172,7 @@
       //ベルレ法による必要な初期値の計算
       calculateInitialCondition: function (dt) {
         //力の取得
-        f = this.calculateForce();
+        const f = this.calculateForce();
         //加速度ベクトルの取得
         this.ax = f.x / this.mass;
         this.ay = f.y / this.mass;
@@ -244,7 +245,7 @@
       plot2D_velocity.options.axes.xaxis.min = 0;                         //目盛の最小値
       plot2D_velocity.options.legend.show = true;                         //凡例の有無
       plot2D_velocity.options.legend.location = 'ne';                     //凡例の位置 
-      var series = []; //データ列オプション用配列
+      series = []; //データ列オプション用配列
       series.push({
         showLine: true,           //線描画の有無
         label: "vx",              //凡例の設定
@@ -272,7 +273,7 @@
       plot2D_energy.options.axes.xaxis.min = 0;
       plot2D_energy.options.legend.show = true;      //凡例の有無
       plot2D_energy.options.legend.location = 'ne';  //凡例の位置 
-      var series = []; //データ列オプション用配列
+      series = []; //データ列オプション用配列
       series.push({
         showLine: true,              //線描画の有無
         label: "運動エネルギー",     //凡例の設定
@@ -592,9 +593,8 @@
           var x = j * yuka_w;
           var y = i * yuka_w;
           //一辺の長さ「yuka_w」の正方形の形状オブジェクトの宣言と生成
-          var geometry = new THREE.PlaneGeometry(yuka_w, yuka_w);
+          geometry = new THREE.PlaneGeometry(yuka_w, yuka_w);
           //材質オブジェクトの宣言
-          var material;
           //市松模様とするための材質オブジェクトを生成
           if (Math.abs(i + j) % 2 == 0) {
             material = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
