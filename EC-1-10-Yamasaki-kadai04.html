@@ -698,8 +698,7 @@
           let target2 = balls[j];
           const distance = Math.sqrt((target1.x - target2.x) ** 2 + (target1.y - target2.y) ** 2 + (target1.z - target2.z) ** 2);
           if (distance <= target1.radius + target2.radius) {
-            collisionNumberList.push([i, j]);
-            console.log(i,j);
+            collisionNumberList.push({ num1: i, num2: j, distance: distance, vector: { x: target1.x - target2.x, y: target1.y - target2.y, z: target1.z - target2.z } });
           }
         }
       }
@@ -728,7 +727,6 @@
       //時刻の取得
       var time = step * dt;
       if (stopFlag == false) {
-        const collisionList = getCollisionNumberList();
         for (var k = 0; k < skip; k++) {
           step++;
           time = step * dt;
