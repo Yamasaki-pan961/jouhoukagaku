@@ -71,11 +71,16 @@
 
         //力の取得
         const f = this.calculateForce();
+        calculateCollision();
 
         //加速度ベクトルの更新
-        this.ax = f.x / this.mass;
-        this.ay = f.y / this.mass;
-        this.az = f.z / this.mass;
+        this.ax = (f.x + this.diffVx * this.mass / dt / 2) / this.mass;
+        this.ay = (f.y + this.diffVy * this.mass / dt / 2) / this.mass;
+        this.az = (f.z + this.diffVz * this.mass / dt / 2) / this.mass;
+
+        this.diffVx = 0;
+        this.diffVy = 0;
+        this.diffVz = 0;
 
         //現時刻の位置ベクトルを一時保存
         var x_ = this.x;
@@ -96,7 +101,6 @@
         this.x_1 = x_;
         this.y_1 = y_;
         this.z_1 = z_;
-
         //床との衝突
         if (this.z < this.radius) {
           var tmp_z = this.z_1;
@@ -151,6 +155,11 @@
         this.vy = parameter.vy;
         this.vz = parameter.vz;
 
+        //前回との速度比較
+        this.diffVx = 0;
+        this.diffVy = 0;
+        this.diffVz = 0;
+
         //前時刻の位置ベクトル
         this.x_1;
         this.y_1;
@@ -191,15 +200,21 @@
     var balls = [
       new Ball({
         radius: 5,  //球の半径
-        mass: 1,                //質量
-        x: 0, y: 10, z: 30,     //位置ベクトル
+        mass: 3,                //質量
+        x: 0, y: 0, z: 15,     //位置ベクトル
         vx: 0, vy: 0, vz: 0    //速度ベクトル
       }),
       new Ball({
         radius: 5,  //球の半径
         mass: 1,                //質量
-        x: 10, y: 0, z: 20,     //位置ベクトル
-        vx: 0, vy: 0, vz: 0    //速度ベクトル
+        x: 0, y: 15, z: 15,     //位置ベクトル
+        vx: 0, vy: -10, vz: 0    //速度ベクトル
+      }),
+      new Ball({
+        radius: 5,  //球の半径
+        mass: 1,                //質量
+        x: 15, y: 0, z: 15,     //位置ベクトル
+        vx: -10, vy: 0, vz: 0    //速度ベクトル
       }),
 
     ];
@@ -698,13 +713,69 @@
           let target2 = balls[j];
           const distance = Math.sqrt((target1.x - target2.x) ** 2 + (target1.y - target2.y) ** 2 + (target1.z - target2.z) ** 2);
           if (distance <= target1.radius + target2.radius) {
-            collisionNumberList.push({ num1: i, num2: j, distance: distance, vector: { x: target1.x - target2.x, y: target1.y - target2.y, z: target1.z - target2.z } });
+            collisionNumberList.push({ num1: i, num2: j, distance: distance, vector: { vx: target1.x - target2.x, vy: target1.y - target2.y, vz: target1.z - target2.z } });
+            console.log(i, j);
           }
         }
       }
       return collisionNumberList;
     }
+    function calculateCollision() {
+      const collisionNumberList = getCollisionNumberList();
+      for (let i in collisionNumberList) {
+        const collisionNumbers = collisionNumberList[i];
+        const num1 = collisionNumbers.num1;
+        const num2 = collisionNumbers.num2;
+        const directionVec = collisionNumbers.vector;
+        let target1 = balls[num1];
+        let target2 = balls[num2];
+        const mass1 = target1.mass;
+        const mass2 = target2.mass;
 
+        const vectors = ['vx', 'vy', 'vz'];
+        let unitVec = {}
+        let innerProduct1 = 0;
+        let innerProduct2 = 0;
+        for (let index in vectors) {
+          const vec = vectors[index];
+          unitVec[vec] = directionVec[vec] / Math.abs(collisionNumbers.distance);
+          innerProduct1 += unitVec[vec] * target1[vec];
+          innerProduct2 += unitVec[vec] * target2[vec];
+        }
+        const v1 = (2 * mass2 * innerProduct2 + (mass1 - mass2) * innerProduct1) / (target1.mass + target2.mass);
+        const v2 = (2 * mass1 * innerProduct1 + (mass2 - mass1) * innerProduct2) / (target1.mass + target2.mass);
+
+        const diffVectors = ['diffVx', 'diffVy', 'diffVz'];
+        for (let index in vectors) {
+          const vec = vectors[index];
+          target1[diffVectors[index]] = v1 * unitVec[vec] - target1[vec];
+          target2[diffVectors[index]] = v2 * unitVec[vec] - target2[vec];
+          target1[vec] -= v1 * unitVec[vec];
+          target2[vec] -= v2 * unitVec[vec];
+        }
+        target1.x = target1.x_1
+        target1.y = target1.y_1
+        target1.z = target1.z_1
+        target2.x = target2.x_1
+        target2.y = target2.y_1
+        target2.z = target2.z_1
+
+        balls[num1] = target1;
+        balls[num2] = target2;
+        // balls[num1] = new Ball({
+        //   radius: target1.radius,  //球の半径
+        //   mass: target1.mass,                //質量
+        //   x: target1.x_1, y: target1.y_1, z: target1.z_1,     //位置ベクトル
+        //   vx: target1.vx, vy: target1.vy, vz: target1.vz    //速度ベクトル
+        // });
+        // balls[num2] = new Ball({
+        //   radius: target2.radius,  //球の半径
+        //   mass: target2.mass,                //質量
+        //   x: target2.x_1, y: target2.y_1, z: target2.z_1,     //位置ベクトル
+        //   vx: target2.vx, vy: target2.vy, vz: target2.vz    //速度ベクトル
+        // });
+      }
+    }
     ////////////////////////////////////////////////////////////////////
     // 無限ループ関数の定義
     ////////////////////////////////////////////////////////////////////
