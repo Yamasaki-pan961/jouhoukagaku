@@ -56,59 +56,12 @@
     // 球クラスの定義
     ///////////////////////////////////
     var Ball = function (parameter) {
-      //半径
-      this.radius = parameter.radius;
-      //質量
-      this.mass = parameter.mass;
-
-      //位置ベクトル
-      this.x = parameter.x;
-      this.y = parameter.y;
-      this.z = parameter.z;
-
-      //速度ベクトル
-      this.vx = parameter.vx;
-      this.vy = parameter.vy;
-      this.vz = parameter.vz;
-
-      //前時刻の位置ベクトル
-      this.x_1;
-      this.y_1;
-      this.z_1;
-
-      //初期位置の計算
-      this.calculateInitialCondition(dt);
+      this.set(parameter);
 
       //Plot2D用オブジェクト
       this.plot2D_position; //位置ベクトル
       this.plot2D_velocity; //速度ベクトル
       this.plot2D_energy;
-
-      //時系列プロットデータ用配列
-      this.data_x = [];  //x座標
-      this.data_y = [];  //y座標
-      this.data_z = [];  //z座標
-      this.data_vx = []; //vx座標
-      this.data_vy = []; //vy座標
-      this.data_vz = []; //vz座標
-      this.data_kinetic = [];   //運動エネルギー
-      this.data_potential = []; //ポテンシャルエネルギー
-      this.data_energy = [];    //力学的エネルギー
-
-      //プロットデータ配列に初期値を代入
-      this.data_x.push([0, this.x]);
-      this.data_y.push([0, this.y]);
-      this.data_z.push([0, this.z]);
-      this.data_vx.push([0, this.vx]);
-      this.data_vy.push([0, this.vy]);
-      this.data_vz.push([0, this.vz]);
-
-      //初期力学的エネルギーの計算とプロットデータ配列に初期値を代入
-      var energy = this.calculateEnergy();
-      this.data_kinetic.push([0, energy.kinetic]);
-      this.data_potential.push([0, energy.potential]);
-      this.data_energy.push([0, energy.kinetic + energy.potential]);
-
     };
     Ball.prototype = {
       constructor: Ball, //コンストラクタ
@@ -181,6 +134,56 @@
         var potential = this.mass * g * this.z_1;
         //力学的エネルギーをオブジェクトで返す
         return { kinetic: kinetic, potential: potential };
+      },
+      set: function (parameter) {
+        //半径
+        this.radius = parameter.radius;
+        //質量
+        this.mass = parameter.mass;
+
+        //位置ベクトル
+        this.x = parameter.x;
+        this.y = parameter.y;
+        this.z = parameter.z;
+
+        //速度ベクトル
+        this.vx = parameter.vx;
+        this.vy = parameter.vy;
+        this.vz = parameter.vz;
+
+        //前時刻の位置ベクトル
+        this.x_1;
+        this.y_1;
+        this.z_1;
+
+        //初期位置の計算
+        this.calculateInitialCondition(dt);
+
+        //時系列プロットデータ用配列
+        this.data_x = [];  //x座標
+        this.data_y = [];  //y座標
+        this.data_z = [];  //z座標
+        this.data_vx = []; //vx座標
+        this.data_vy = []; //vy座標
+        this.data_vz = []; //vz座標
+        this.data_kinetic = [];   //運動エネルギー
+        this.data_potential = []; //ポテンシャルエネルギー
+        this.data_energy = [];    //力学的エネルギー
+
+        //プロットデータ配列に初期値を代入
+        this.data_x.push([0, this.x]);
+        this.data_y.push([0, this.y]);
+        this.data_z.push([0, this.z]);
+        this.data_vx.push([0, this.vx]);
+        this.data_vy.push([0, this.vy]);
+        this.data_vz.push([0, this.vz]);
+
+        //初期力学的エネルギーの計算とプロットデータ配列に初期値を代入
+        var energy = this.calculateEnergy();
+        this.data_kinetic.push([0, energy.kinetic]);
+        this.data_potential.push([0, energy.potential]);
+        this.data_energy.push([0, energy.kinetic + energy.potential]);
+
       }
     };
 
@@ -659,7 +662,7 @@
         parameter.vz = parseFloat(document.getElementById("input_vz").value);
 
         //球クラスのインスタンスの再生成
-        ball = new Ball(parameter);
+        ball.set(parameter);
 
         //再計算フラグと一時停止フラグの解除
         restartFlag = false;
