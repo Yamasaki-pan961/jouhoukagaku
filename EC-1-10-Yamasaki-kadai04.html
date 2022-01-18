@@ -48,22 +48,6 @@
     var skip_data = 5;  //プロットデータ間引数
     var g = 9.8;      //重力定数
 
-    //Plot2D用オブジェクト
-    var plot2D_position; //位置ベクトル
-    var plot2D_velocity; //速度ベクトル
-    let plot2D_energy;
-
-    //時系列プロットデータ用配列
-    var data_x = [];  //x座標
-    var data_y = [];  //y座標
-    var data_z = [];  //z座標
-    var data_vx = []; //vx座標
-    var data_vy = []; //vy座標
-    var data_vz = []; //vz座標
-    var data_kinetic = [];   //運動エネルギー
-    var data_potential = []; //ポテンシャルエネルギー
-    var data_energy = [];    //力学的エネルギー
-
     //一時停止フラグ
     var restartFlag = false; //再計算フラグ
     var stopFlag = true;     //一時停止フラグ
@@ -95,30 +79,35 @@
       //初期位置の計算
       this.calculateInitialCondition(dt);
 
-      //プロットデータ配列の初期化
-      data_x = [];
-      data_y = [];
-      data_z = [];
-      data_vx = [];
-      data_vy = [];
-      data_vz = [];
-      data_kinetic = [];
-      data_potential = [];
-      data_energy = [];
+      //Plot2D用オブジェクト
+      this.plot2D_position; //位置ベクトル
+      this.plot2D_velocity; //速度ベクトル
+      this.plot2D_energy;
+
+      //時系列プロットデータ用配列
+      this.data_x = [];  //x座標
+      this.data_y = [];  //y座標
+      this.data_z = [];  //z座標
+      this.data_vx = []; //vx座標
+      this.data_vy = []; //vy座標
+      this.data_vz = []; //vz座標
+      this.data_kinetic = [];   //運動エネルギー
+      this.data_potential = []; //ポテンシャルエネルギー
+      this.data_energy = [];    //力学的エネルギー
 
       //プロットデータ配列に初期値を代入
-      data_x.push([0, this.x]);
-      data_y.push([0, this.y]);
-      data_z.push([0, this.z]);
-      data_vx.push([0, this.vx]);
-      data_vy.push([0, this.vy]);
-      data_vz.push([0, this.vz]);
+      this.data_x.push([0, this.x]);
+      this.data_y.push([0, this.y]);
+      this.data_z.push([0, this.z]);
+      this.data_vx.push([0, this.vx]);
+      this.data_vy.push([0, this.vy]);
+      this.data_vz.push([0, this.vz]);
 
       //初期力学的エネルギーの計算とプロットデータ配列に初期値を代入
       var energy = this.calculateEnergy();
-      data_kinetic.push([0, energy.kinetic]);
-      data_potential.push([0, energy.potential]);
-      data_energy.push([0, energy.kinetic + energy.potential]);
+      this.data_kinetic.push([0, energy.kinetic]);
+      this.data_potential.push([0, energy.potential]);
+      this.data_energy.push([0, energy.kinetic + energy.potential]);
 
     };
     Ball.prototype = {
