@@ -163,10 +163,20 @@
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
+        
         if(this.z <= this.radius){
           let next_vz = -this.vz;
           fz += (next_vz - this.vz) * this.mass / dt
+          }
+           if(this.next_vx != 0){
+
            }
+           fx +=(next_vx - this.vx) * this.mass / dt
+           fx +=(next_vy - this.vy) * this.mass / dt
+
+          this.next_vx = 0;
+          this.next_vy = 0;
+          this.next_vz = 0;
         return { x: fx, y: fy, z: fz };
       },
       //ベルレ法による必要な初期値の計算
@@ -660,7 +670,7 @@
 
       //球オブジェクトの位置ベクトルを設定
       sphere.position.set(ball.x, ball.y, ball.z);
-      sphere2.position.set(ball.x, ball.y, ball.z);
+      sphere2.position.set(ball2.x, ball2.y, ball2.z);
 
       //再スタートフラグのチェック
       if (restartFlag == true) {
@@ -682,7 +692,7 @@
 
         //球クラスのインスタンスの再生成
         ball = new Ball(parameter);
-        ball2 = new Ball(parameter);
+        
 
         //再計算フラグと一時停止フラグの解除
         restartFlag = false;
