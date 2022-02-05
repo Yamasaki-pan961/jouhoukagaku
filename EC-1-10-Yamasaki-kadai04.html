@@ -166,15 +166,15 @@
         var fy = 0;
         var fz = -this.mass * g;
         if (Math.abs(this.x) > this.radius + 30) {
-          let next_vx = -this.vx*0.8;
+          let next_vx = -this.vx*df;
           fx += (next_vx - this.vx) * this.mass / dt
         }
         if (Math.abs(this.y) > this.radius + 30) {
-          let next_vy = -this.vy*0.8;
+          let next_vy = -this.vy*df;
           fy += (next_vy - this.vy) * this.mass / dt
         }
         if (this.z <= this.radius) {
-          let next_vz = -this.vz*0.8;
+          let next_vz = -this.vz*df;
           fz += (next_vz - this.vz) * this.mass / dt
         }
         return { x: fx, y: fy, z: fz };
@@ -866,7 +866,19 @@
           </tr>
         </table>
 
-        
+        <h3>減衰係数</h3>
+        <table>
+          <tr>
+            <!-- 減衰係数 -->
+            <td>範囲</td>
+            <!-- 減衰係数を指定するスライダー -->
+            <td>
+              <div id="slider_df" class="slider"></div>
+            </td>
+            <!-- 現在のy座標 -->
+            <td><input type="text" value="" id="input_df" class="number"></td>
+          </tr>
+        </table>
 
         <!-- ボタン -->
         <div id="buttonFrame">
