@@ -391,6 +391,21 @@
           document.getElementById("input_g").value = value;
         }
       });
+            //減衰の範囲「df」の指定
+            document.getElementById("input_df").value = df;
+      $('#slider_df').slider({
+        min: 0,    //最小値の指定
+        max: 1,     //最大値の指定
+        step: 0.1,    //刻み幅の指定
+        value: df,     //現在の値を指定
+        slide: function (event, ui) { //スライドした時のイベントを登録
+          //スライダーの指定した値を取得する
+          var value = ui.value;
+
+          //スライダーで指定した値を座標表示用input要素に表示する
+          document.getElementById("input_df").value = value;
+        }
+      });
 
       //座標表示用input要素に値を代入
       document.getElementById("input_dt").value = dt; //id名「input_○」の要素の「value」属性に値を代入
