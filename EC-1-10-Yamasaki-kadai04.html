@@ -68,6 +68,9 @@
     var restartFlag = false; //再計算フラグ
     var stopFlag = true;     //一時停止フラグ
 
+    //軌跡配列の初期化
+    var trajectory = [];
+
     ///////////////////////////////////
     // 球クラスの定義
     ///////////////////////////////////
@@ -650,7 +653,17 @@
             data_energy.push([time, energy.kinetic + energy.potential]);
           }
         }
+        //軌跡配列にデータを追加
+        trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
       }
+      
+      //軌跡の描画
+      var trajectoryGeometry = new THREE.Geometry();
+      trajectoryGeometry.vertices = trajectory;
+      var material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+      var lines = new THREE.Line(trajectoryGeometry, material);
+      scene.add(lines);
+
       //時刻の取得と出力
       document.getElementById("time").innerHTML = time.toFixed(2);
 
@@ -697,6 +710,7 @@
       //レンダリング
       renderer.render(scene, camera);
 
+      scene.remove(lines);
       //「loop()」関数の呼び出し
       requestAnimationFrame(loop);
     }
