@@ -172,11 +172,11 @@
           this.next_vz -= this.vz;
           fz += (this.next_vz - this.vz) * this.mass / dt
         }
-        
-        if(this.next_vx != 0){
+
+        if (this.next_vx != 0) {
           fx += (this.next_vx - this.vx) * this.mass / dt
         }
-        if(this.next_vy != 0){
+        if (this.next_vy != 0) {
           fx += (this.next_vy - this.vy) * this.mass / dt
         }
 
@@ -655,9 +655,19 @@
           step++;
           time = step * dt;
 
+          if (
+            Math.abs(
+              Math.sqrt(ball.x ** 2 + ball.y ** 2 + ball.z ** 2) -
+              Math.sqrt(ball2.x ** 2 + ball2.y ** 2 + ball2.z ** 2)
+            ) <= ball.radius + ball2.radius
+          ) {
+            ball.next_vx = (ball.mass - ball2.mass) / (ball.mass + ball2.mass) * ball.vx;
+            ball2.next_vx = 2 * ball.mass / (ball.mass + ball2.mass) * ball.vx;
+          }
           //球体の時間発展
           ball.timeEvolution(dt);
-          ball2.timeEvolution(dt)
+          ball2.timeEvolution(dt);
+
 
           if (step % (skip * skip_data) == 0) {
             //プロットデータ配列にデータを追加
