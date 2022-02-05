@@ -47,7 +47,7 @@
     var skip = 100;     //計算間引数
     var skip_data = 5;  //プロットデータ間引数
     var g = 9.8;      //重力定数
-    var h = 30;
+    var h = 50;
 
     //Plot2D用オブジェクト
     var plot2D_position; //位置ベクトル
@@ -397,7 +397,7 @@
         min: 30,    //最小値の指定
         max: 100,     //最大値の指定
         step: 1,    //刻み幅の指定
-        value: 30,     //現在の値を指定
+        value: h,     //現在の値を指定
         slide: function (event, ui) { //スライドした時のイベントを登録
           //スライダーの指定した値を取得する
           var value = ui.value;
@@ -407,6 +407,15 @@
         }
       });
 
+      //input要素に値を入力した時のイベントを追加
+      document.getElementById("input_h").addEventListener("change", function () {
+			//input要素に入力された値を取得する
+			var value = parseFloat(this.value) || 0;
+			//input要素に入力した値を球の位置ベクトルに代入する
+			h = value;
+			//スライダー位置をinput要素に入力した値にする
+			$('#slider_h').slider({ value: value });  //スライダー位置を指定
+		  });
 
       //座標表示用input要素に値を代入
       document.getElementById("input_dt").value = dt; //id名「input_○」の要素の「value」属性に値を代入
@@ -694,6 +703,7 @@
         skip = parseInt(document.getElementById("input_skip").value);
         dt = parseFloat(document.getElementById("input_dt").value);
         g = parseFloat(document.getElementById("input_g").value);
+        h = parseFloat(document.getElementById("input_h").value);
 
         //球クラスのパラメータの初期化
         var parameter = { radius: 5 };
