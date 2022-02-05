@@ -62,6 +62,10 @@
 	var data_kinetic = [];   //運動エネルギー
 	var data_potential = []; //ポテンシャルエネルギー
 	var data_energy = [];    //力学的エネルギー
+	var data_tension = [];  //張力
+
+	//軌跡配列
+	var trajectory = [];
 
 	//一時停止フラグ
 	var restartFlag = false; //再計算フラグ
@@ -90,10 +94,6 @@
 		this.x_1;
 		this.y_1;
 		this.z_1;
-		//前時刻の速度ベクトル
-		this.vx_1;
-		this.vy_1;
-		this.vz_1;
 
 		//初期位置の計算
 		this.calculateInitialCondition(dt);
@@ -108,6 +108,10 @@
 		data_kinetic = [];   
 		data_potential = []; 
 		data_energy = [];    
+		data_tension = [];
+
+		//軌跡配列の初期化
+		trajectory = [];
 
 		//プロットデータ配列に初期値を代入
 		data_x.push([0, this.x]);
@@ -122,6 +126,8 @@
 		data_kinetic.push([0, energy.kinetic]);
 		data_potential.push([0, energy.potential]);
 		data_energy.push([0, energy.kinetic + energy.potential]);
+		var tension = this.calculateTension();
+		data_tension.push([0, tension]);
 
 	};
 	Ball.prototype = {
@@ -194,6 +200,17 @@
 
 			return { x: fx, y: fy, z: fz };
 		},
+		//張力の計算
+		calculateTension: function () {
+			//速度の大きさの２乗の計算
+			var v2 = this.vx * this.vx + this.vy * this.vy + this.vz * this.vz;
+			//支点からの距離の計算
+			var L = Math.sqrt(Math.pow(this.x - fulcrum.x, 2) + Math.pow(this.y - fulcrum.y, 2) + Math.pow(this.z - fulcrum.z, 2));
+
+			//各時刻における未定数の計算
+			var tension = this.mass * (-g * (this.z - fulcrum.z) + v2) / L;
+			return Math.abs(tension);
+		},
 		//ベルレ法による必要な初期値の計算
 		calculateInitialCondition: function (dt) {
 			//力の取得
@@ -242,6 +259,8 @@
 		plot2D_position.options.axes.xaxis.label = "time [s]";              //x軸ラベル
 		plot2D_position.options.axes.yaxis.label = "position [m]";          //y軸ラベル
 		plot2D_position.options.axes.yaxis.labelOptions = { angle: -90 };   //ラベル回転角
+		plot2D_position.options.axes.y2axis.label = "tension [N]";          //y軸ラベル
+		plot2D_position.options.axes.y2axis.labelOptions = { angle: -90 };   //ラベル回転角
 		plot2D_position.options.axes.xaxis.min = 0;                         //目盛の最小値
 		plot2D_position.options.legend.show = true;                         //凡例の有無
 		plot2D_position.options.legend.location = 'ne';                     //凡例の位置 
@@ -259,6 +278,12 @@
 		series.push({
 			showLine: true,              //線描画の有無
 			label: "z座標",              //凡例の設定
+			markerOptions: { show: true} //点描画の有無
+		});
+		series.push({
+			showLine: true,              //線描画の有無
+			label: "張力",              //凡例の設定
+			yaxis: "y2axis",            //y軸の指定
 			markerOptions: { show: true} //点描画の有無
 		});
 		plot2D_position.options.series = series; //データ列オプションの代入
@@ -447,6 +472,7 @@
 			plot2D_position.pushData(data_x); //x座標
 			plot2D_position.pushData(data_y); //y座標
 			plot2D_position.pushData(data_z); //z座標
+			plot2D_position.pushData(data_tension); //張力
 
 			plot2D_position.linerPlot();   //メソッドによる再描画
 
@@ -685,14 +711,25 @@
 					data_kinetic.push([time, energy.kinetic]);
 					data_potential.push([time, energy.potential]);
 					data_energy.push([time, energy.kinetic + energy.potential]);
+					var tension = ball.calculateTension();
+					data_tension.push([time, tension]);
 				}
 			}
+			//軌跡配列にデータを追加
+			trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
 		}
 		//時刻の取得と出力
 		document.getElementById("time").innerHTML = time.toFixed(2);
 
 		//球オブジェクトの位置ベクトルを設定
 		sphere.position.set(ball.x, ball.y, ball.z);
+
+		//軌跡の描画
+		var trajectoryGeometry = new THREE.Geometry();
+		trajectoryGeometry.vertices = trajectory;
+		var material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+		var lines = new THREE.Line(trajectoryGeometry, material);
+		scene.add(lines);
 
 		////線の描画/////////////////////////////////////////////////
 		//形状クラスのインスタンスの生成
@@ -747,8 +784,9 @@
 		//レンダリング
 		renderer.render(scene, camera);
 
-		//線オブジェクトの削除
+		//線オブジェクトをシーンから削除
 		scene.remove(line);
+		scene.remove(lines);
 
 		//「loop()」関数の呼び出し
 		requestAnimationFrame(loop);
