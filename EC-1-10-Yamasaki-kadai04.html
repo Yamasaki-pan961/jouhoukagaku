@@ -82,6 +82,10 @@
       this.y = parameter.y;
       this.z = parameter.z;
 
+      this.next_vx = 0;
+      this.next_vy = 0;
+      this.next_vz = 0;
+
       //速度ベクトル
       this.vx = parameter.vx;
       this.vy = parameter.vy;
@@ -155,30 +159,30 @@
         this.y_1 = y_;
         this.z_1 = z_;
 
-        
-        
+
+
       },
       //力の計算
       calculateForce: function () {
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
-        
+
         if (this.z <= this.radius) {
           this.next_vz -= this.vz;
           fz += (this.next_vz - this.vz) * this.mass / dt
         }
-        
-        if(this.next_vx != 0){
+
+        if (this.next_vx != 0) {
           fx += (this.next_vx - this.vx) * this.mass / dt
         }
-        if(this.next_vy != 0){
+        if (this.next_vy != 0) {
           fx += (this.next_vy - this.vy) * this.mass / dt
         }
 
-          this.next_vx = 0;
-          this.next_vy = 0;
-          this.next_vz = 0;
+        this.next_vx = 0;
+        this.next_vy = 0;
+        this.next_vz = 0;
         return { x: fx, y: fy, z: fz };
       },
       //ベルレ法による必要な初期値の計算
@@ -211,15 +215,18 @@
     var ball = new Ball({
       radius: 5,  //球の半径
       mass: 1,                //質量
-      x: 0, y: 0, z: 50,     //位置ベクトル
+      x: 0, y: 0, z: 10,     //位置ベクトル
       vx: 10, vy: 0, vz: 0    //速度ベクトル
     });
+
+    //球クラスのインスタンスの生成
     var ball2 = new Ball({
       radius: 5,  //球の半径
       mass: 1,                //質量
       x: 20, y: 0, z: 10,     //位置ベクトル
       vx: 0, vy: 0, vz: 0    //速度ベクトル
     });
+
 
     ////////////////////////////////////////////////////////////////////
     //jqPlotスタート関数
@@ -590,7 +597,7 @@
 
     //グローバル変数の宣言
     var sphere; //球オブジェクト
-    var sphere2; //球オブジェクト
+    var sphere2;
     function initObject() {
       //形状オブジェクトの宣言と生成
       var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
@@ -648,9 +655,19 @@
           step++;
           time = step * dt;
 
+          if (
+            Math.abs(
+              Math.sqrt(ball.x ** 2 + ball.y ** 2 + ball.z ** 2) -
+              Math.sqrt(ball2.x ** 2 + ball2.y ** 2 + ball2.z ** 2)
+            ) <= ball.radius + ball2.radius
+          ) {
+            ball.next_vx = (ball.mass - ball2.mass) / (ball.mass + ball2.mass) * ball.vx;
+            ball2.next_vx = 2 * ball.mass / (ball.mass + ball2.mass) * ball.vx;
+          }
           //球体の時間発展
           ball.timeEvolution(dt);
           ball2.timeEvolution(dt);
+
 
           if (step % (skip * skip_data) == 0) {
             //プロットデータ配列にデータを追加
@@ -694,7 +711,6 @@
 
         //球クラスのインスタンスの再生成
         ball = new Ball(parameter);
-        
 
         //再計算フラグと一時停止フラグの解除
         restartFlag = false;
