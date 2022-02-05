@@ -82,6 +82,10 @@
       this.y = parameter.y;
       this.z = parameter.z;
 
+      this.next_vx = 0;
+      this.next_vy = 0;
+      this.next_vz = 0;
+
       //速度ベクトル
       this.vx = parameter.vx;
       this.vy = parameter.vy;
@@ -155,18 +159,30 @@
         this.y_1 = y_;
         this.z_1 = z_;
 
-        
-        
+
+
       },
       //力の計算
       calculateForce: function () {
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
+
         if (this.z <= this.radius) {
-          let next_vz = -this.vz;
-          fz += (next_vz - this.vz) * this.mass / dt
+          this.next_vz -= this.vz;
+          fz += (this.next_vz - this.vz) * this.mass / dt
         }
+        
+        if(this.next_vx != 0){
+          fx += (this.next_vx - this.vx) * this.mass / dt
+        }
+        if(this.next_vy != 0){
+          fx += (this.next_vy - this.vy) * this.mass / dt
+        }
+
+        this.next_vx = 0;
+        this.next_vy = 0;
+        this.next_vz = 0;
         return { x: fx, y: fy, z: fz };
       },
       //ベルレ法による必要な初期値の計算
