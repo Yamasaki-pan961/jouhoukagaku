@@ -164,7 +164,7 @@
         var fz = -this.mass * g;
         if(this.z <= this.radius){
           let next_vz = -this.vz;
-          fz += (next_vz - this.vz) * thes.mass / dt
+          fz += (next_vz - this.vz) * this.mass / dt
         }
         return { x: fx, y: fy, z: fz };
       },
