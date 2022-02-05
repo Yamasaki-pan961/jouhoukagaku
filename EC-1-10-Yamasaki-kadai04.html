@@ -161,6 +161,14 @@
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
+        if (Math.abs(this.x) > this.radius + 30) {
+          let next_vx = -this.vx;
+          fx += (next_vx - this.vx) * this.mass / dt
+        }
+        if (Math.abs(this.y) > this.radius + 30) {
+          let next_vy = -this.vy;
+          fy += (next_vy - this.vy) * this.mass / dt
+        }
         if (this.z <= this.radius) {
           let next_vz = -this.vz;
           fz += (next_vz - this.vz) * this.mass / dt
