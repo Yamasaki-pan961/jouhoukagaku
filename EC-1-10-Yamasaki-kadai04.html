@@ -163,6 +163,10 @@
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
+        if(this.z <= this.radius){
+          let next_vz = this.vz;
+          fz += (next_vz - this.vz) *this.mass / dt
+           }
         return { x: fx, y: fy, z: fz };
       },
       //ベルレ法による必要な初期値の計算
