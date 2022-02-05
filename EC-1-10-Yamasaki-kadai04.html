@@ -155,12 +155,7 @@
         this.y_1 = y_;
         this.z_1 = z_;
 
-        //床との衝突
-        if (this.z < this.radius) {
-          var tmp_z = this.z_1;
-          this.z_1 = this.z;
-          this.z = tmp_z;
-        }
+
       },
       //力の計算
       calculateForce: function () {
