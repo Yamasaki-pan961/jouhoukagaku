@@ -164,8 +164,8 @@
         var fy = 0;
         var fz = -this.mass * g;
         if(this.z <= this.radius){
-          let next_vz = this.vz;
-          fz += (next_vz - this.vz) *this.mass / dt
+          let next_vz = -this.vz;
+          fz += (next_vz - this.vz) * this.mass / dt
            }
         return { x: fx, y: fy, z: fz };
       },
@@ -200,6 +200,12 @@
       radius: 5,  //球の半径
       mass: 1,                //質量
       x: 0, y: 0, z: 50,     //位置ベクトル
+      vx: 10, vy: 0, vz: 0    //速度ベクトル
+    });
+    var ball2 = new Ball({
+      radius: 5,  //球の半径
+      mass: 1,                //質量
+      x: 20, y: 0, z: 10,     //位置ベクトル
       vx: 0, vy: 0, vz: 0    //速度ベクトル
     });
 
@@ -572,6 +578,7 @@
 
     //グローバル変数の宣言
     var sphere; //球オブジェクト
+    var sphere2; //球オブジェクト
     function initObject() {
       //形状オブジェクトの宣言と生成
       var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
@@ -579,8 +586,10 @@
       var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
       //球オブジェクトの生成
       sphere = new THREE.Mesh(geometry, material);
+      sphere2 = new THREE.Mesh(geometry, material);
       //球オブジェクトのシーンへの追加
       scene.add(sphere);
+      scene.add(sphere2);
       //球オブジェクトの影の生成元
       sphere.castShadow = true;
 
@@ -629,6 +638,7 @@
 
           //球体の時間発展
           ball.timeEvolution(dt);
+          ball2.timeEvolution(dt);
 
           if (step % (skip * skip_data) == 0) {
             //プロットデータ配列にデータを追加
@@ -650,6 +660,7 @@
 
       //球オブジェクトの位置ベクトルを設定
       sphere.position.set(ball.x, ball.y, ball.z);
+      sphere2.position.set(ball.x, ball.y, ball.z);
 
       //再スタートフラグのチェック
       if (restartFlag == true) {
@@ -671,6 +682,7 @@
 
         //球クラスのインスタンスの再生成
         ball = new Ball(parameter);
+        ball2 = new Ball(parameter);
 
         //再計算フラグと一時停止フラグの解除
         restartFlag = false;
