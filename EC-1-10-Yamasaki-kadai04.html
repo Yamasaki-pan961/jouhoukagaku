@@ -165,15 +165,15 @@
         var fy = 0;
         var fz = -this.mass * g;
         if (Math.abs(this.x) > this.radius + 30) {
-          let next_vx = -this.vx;
+          let next_vx = -this.vx*0.8;
           fx += (next_vx - this.vx) * this.mass / dt
         }
         if (Math.abs(this.y) > this.radius + 30) {
-          let next_vy = -this.vy;
+          let next_vy = -this.vy*0.8;
           fy += (next_vy - this.vy) * this.mass / dt
         }
         if (this.z <= this.radius) {
-          let next_vz = -this.vz;
+          let next_vz = -this.vz*0.8;
           fz += (next_vz - this.vz) * this.mass / dt
         }
         return { x: fx, y: fy, z: fz };
