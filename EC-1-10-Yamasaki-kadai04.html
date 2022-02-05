@@ -47,6 +47,7 @@
     var skip = 100;     //計算間引数
     var skip_data = 5;  //プロットデータ間引数
     var g = 9.8;      //重力定数
+    var h = 30;
 
     //Plot2D用オブジェクト
     var plot2D_position; //位置ベクトル
@@ -164,11 +165,11 @@
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
-        if (Math.abs(this.x) > this.radius + 30) {
+        if (Math.abs(this.x) > this.radius + h) {
           let next_vx = -this.vx;
           fx += (next_vx - this.vx) * this.mass / dt
         }
-        if (Math.abs(this.y) > this.radius + 30) {
+        if (Math.abs(this.y) > this.radius + h) {
           let next_vy = -this.vy;
           fy += (next_vy - this.vy) * this.mass / dt
         }
@@ -208,7 +209,7 @@
     var ball = new Ball({
       radius: 5,  //球の半径
       mass: 1,                //質量
-      x: 0, y: 0, z: 50,     //位置ベクトル
+      x: 0, y: 0, z: 40,     //位置ベクトル
       vx: 0, vy: 0, vz: 0    //速度ベクトル
     });
 
@@ -390,6 +391,22 @@
           document.getElementById("input_g").value = value;
         }
       });
+      //反射の範囲「h」の指定
+      document.getElementById("input_h").value = h;
+      $('#slider_h').slider({
+        min: 30,    //最小値の指定
+        max: 100,     //最大値の指定
+        step: 1,    //刻み幅の指定
+        value: 30,     //現在の値を指定
+        slide: function (event, ui) { //スライドした時のイベントを登録
+          //スライダーの指定した値を取得する
+          var value = ui.value;
+
+          //スライダーで指定した値を座標表示用input要素に表示する
+          document.getElementById("input_h").value = value;
+        }
+      });
+
 
       //座標表示用input要素に値を代入
       document.getElementById("input_dt").value = dt; //id名「input_○」の要素の「value」属性に値を代入
@@ -849,6 +866,21 @@
             <td><input type="text" value="" id="input_vz" class="number"></td>
           </tr>
         </table>
+
+        <h3>反射の範囲</h3>
+        <table>
+          <tr>
+            <!-- 反射の範囲 -->
+            <td>範囲</td>
+            <!-- 反射の範囲を指定するスライダー -->
+            <td>
+              <div id="slider_h" class="slider"></div>
+            </td>
+            <!-- 現在のy座標 -->
+            <td><input type="text" value="" id="input_h" class="number"></td>
+          </tr>
+        </table>
+
 
         <!-- ボタン -->
         <div id="buttonFrame">
