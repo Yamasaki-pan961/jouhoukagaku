@@ -218,108 +218,11 @@
       //タブ切り替えインターフェースの実装
       $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
 
-      //スライダーインターフェースの実装
-      var strs = ['x', 'y', 'z', 'vx', 'vy', 'vz'];
-      for (var i = 0; i < strs.length; i++) {
-        var axis = strs[i];     //軸の取得
-        var value = ball[axis]; //位置ベクトル
-
-        //座標表示用input要素に値を代入
-        document.getElementById("input_" + axis).value = value; //id名「input_○」の要素の「value」属性に値を代入
-
-        $('#slider_' + strs[i]).slider({
-          min: -100,    //最小値の指定
-          max: 100,     //最大値の指定
-          step: 1,       //刻み幅の指定
-          value: value,  //現在の値を指定
-          slide: function (event, ui) { //スライドした時のイベントを登録
-            //スライダーの指定した値を取得する
-            var value = ui.value;
-
-            //スライダーで指定した値を座標表示用input要素に表示する
-            var id = this.id.replace("slider_", "input_"); //id名の書き換え（「slider_○」→「input_○」）
-            document.getElementById(id).value = value;     //id名「input_○」の要素の「value」属性に値を代入
-          }
-        });
-
-        //input要素に値を入力した時のイベントを追加
-        document.getElementById("input_" + axis).addEventListener("change", function () {
-          //input要素に入力された値を取得する
-          var value = parseFloat(this.value) || 0;
-
-          //スライダー位置をinput要素に入力した値にする
-          var id = this.id.replace("input_", "slider_"); //id名の書き換え（「input_○」→「slider_○」）
-          $('#' + id).slider({ value: value });          //スライダー位置を指定
-
-        });
-      }
-
-      //描画間引数「skip」の指定
-      document.getElementById("input_skip").value = skip;
-      $('#slider_skip').slider({
-        min: 1,      //最小値の指定
-        max: 1000,   //最大値の指定
-        step: 1,     //刻み幅の指定
-        value: skip, //現在の値を指定
-        slide: function (event, ui) {  //スライドした時のイベントを登録
-          //スライダーの指定した値を取得する
-          var value = ui.value;
-
-          //スライダーで指定した値を座標表示用input要素に表示する
-          document.getElementById("input_skip").value = value;
-        }
-      });
-
-      //質量「mass」の指定
-      document.getElementById("input_mass").value = ball.mass;
-      $('#slider_mass').slider({
-        min: 0,           //最小値の指定
-        max: 10,          //最大値の指定
-        step: 0.1,        //刻み幅の指定
-        value: ball.mass, //現在の値を指定
-        slide: function (event, ui) { //スライドした時のイベントを登録
-          //スライダーの指定した値を取得する
-          var value = ui.value;
-
-          //スライダーで指定した値を座標表示用input要素に表示する
-          document.getElementById("input_mass").value = value;
-        }
-      });
-      //重力定数「g」の指定
-      document.getElementById("input_g").value = g;
-      $('#slider_g').slider({
-        min: -100,    //最小値の指定
-        max: 100,     //最大値の指定
-        step: 0.1,    //刻み幅の指定
-        value: g,     //現在の値を指定
-        slide: function (event, ui) { //スライドした時のイベントを登録
-          //スライダーの指定した値を取得する
-          var value = ui.value;
-
-          //スライダーで指定した値を座標表示用input要素に表示する
-          document.getElementById("input_g").value = value;
-        }
-      });
-
-      //座標表示用input要素に値を代入
-      document.getElementById("input_dt").value = dt; //id名「input_○」の要素の「value」属性に値を代入
-
       ////ボタンクリックとタブ切り替え時のイベントの設定////////////////////////////////
       //計算開始ボタン
       document.getElementById("startButton").addEventListener("click", function () {
         //再計算用フラグを設定
         restartFlag = true;
-      });
-      //一時停止ボタン
-      document.getElementById("stopButton").addEventListener("click", function () {
-        //一時停止ボタンの状態により動作を指定
-        if (stopFlag) {
-          //一時停止フラグを解除
-          stopFlag = false;
-        } else {
-          //一時停止フラグを設定
-          stopFlag = true;
-        }
       });
     }
     ////////////////////////////////////////////////////////////////////
@@ -515,7 +418,7 @@
         //軌跡配列にデータを追加
         trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
       }
-      
+
       //軌跡の描画
       var trajectoryGeometry = new THREE.Geometry();
       trajectoryGeometry.vertices = trajectory;
@@ -524,44 +427,18 @@
       scene.add(lines);
 
       //時刻の取得と出力
-      document.getElementById("time").innerHTML = time.toFixed(2);
 
       //球オブジェクトの位置ベクトルを設定
       sphere.position.set(ball.x, ball.y, ball.z);
 
       //再スタートフラグのチェック
       if (restartFlag == true) {
-        //各種計算パラメータの初期化
-        step = 0;
-        skip = parseInt(document.getElementById("input_skip").value);
-        dt = parseFloat(document.getElementById("input_dt").value);
-        g = parseFloat(document.getElementById("input_g").value);
 
-        //球クラスのパラメータの初期化
-        var parameter = { radius: 5 };
-        parameter.mass = parseFloat(document.getElementById("input_mass").value);
-        parameter.x = parseFloat(document.getElementById("input_x").value);
-        parameter.y = parseFloat(document.getElementById("input_y").value);
-        parameter.z = parseFloat(document.getElementById("input_z").value);
-        parameter.vx = parseFloat(document.getElementById("input_vx").value);
-        parameter.vy = parseFloat(document.getElementById("input_vy").value);
-        parameter.vz = parseFloat(document.getElementById("input_vz").value);
-
-        //球クラスのインスタンスの再生成
-        ball = new Ball(parameter);
-
-        //再計算フラグと一時停止フラグの解除
         restartFlag = false;
         stopFlag = false;
 
         //ボタン表示文字列の変更
         document.getElementById("startButton").value = "再計算スタート";
-      }
-      //ボタンの表示文字列の変更
-      if (stopFlag) {
-        document.getElementById("stopButton").value = "停止解除";
-      } else {
-        document.getElementById("stopButton").value = "一時停止";
       }
 
       //クリアーカラーで初期化
@@ -578,7 +455,7 @@
 
 <body>
   <!-- タブ切り替えインターフェース領域 -->
-  <div id="tabs">
+  <div id="tabs" style="width: 1300px; height: 730px; margin: 30px;">
 
     <!-- タブメニューリスト領域 -->
     <ul id="tabList">
@@ -588,132 +465,11 @@
     <!-- タブコンテンツ領域 -->
     <div id="tab1" class="inner">
       <!-- キャンバスフレーム領域-->
-      <div id="canvas-frame"></div>
+      <div id="canvas-frame" style="width: 1280px;height: 600px; display: block;"></div>
 
-      <!-- コントローラー領域 -->
-      <div id="controller">
-
-        <h2>計算パラメータ</h2>
-        <table>
-          <tr>
-            <td>時刻</td>
-            <!-- 現在のtime座標 -->
-            <td colspan="2"><span id="time">0</span></td>
-          </tr>
-          <tr>
-            <!-- dt -->
-            <td>Δt</td>
-            <!-- 現在のdt座標 -->
-            <td colspan="2"><input type="text" value="" id="input_dt" class="number" style="width:180px"></td>
-          </tr>
-          <tr>
-            <!-- mass -->
-            <td>質量</td>
-            <!-- mを指定するスライダー -->
-            <td>
-              <div id="slider_mass" class="slider" style="width:120px"></div>
-            </td>
-            <!-- 現在のmass -->
-            <td><input type="text" value="" id="input_mass" class="number"></td>
-          </tr>
-          <tr>
-            <!-- g -->
-            <td>重力定数</td>
-            <!-- gを指定するスライダー -->
-            <td>
-              <div id="slider_g" class="slider" style="width:120px"></div>
-            </td>
-            <!-- 現在のg -->
-            <td><input type="text" value="" id="input_g" class="number"></td>
-          </tr>
-          <tr>
-            <!-- skip -->
-            <td>描画間引</td>
-            <!-- skipを指定するスライダー -->
-            <td>
-              <div id="slider_skip" class="slider" style="width:120px"></div>
-            </td>
-            <!-- 現在のskip座標 -->
-            <td><input type="text" value="" id="input_skip" class="number"></td>
-          </tr>
-        </table>
-
-        <h3>位置ベクトル</h3>
-        <table>
-          <tr>
-            <!-- x座標 -->
-            <td>x</td>
-            <!-- x座標を指定するスライダー -->
-            <td>
-              <div id="slider_x" class="slider"></div>
-            </td>
-            <!-- 現在のx座標 -->
-            <td><input type="text" value="" id="input_x" class="number"></td>
-          </tr>
-          <tr>
-            <!-- y座標 -->
-            <td>y</td>
-            <!-- y座標を指定するスライダー -->
-            <td>
-              <div id="slider_y" class="slider"></div>
-            </td>
-            <!-- 現在のy座標 -->
-            <td><input type="text" value="" id="input_y" class="number"></td>
-          </tr>
-          <tr>
-            <!-- z座標 -->
-            <td>z</td>
-            <!-- z座標を指定するスライダー -->
-            <td>
-              <div id="slider_z" class="slider"></div>
-            </td>
-            <!-- 現在のz座標 -->
-            <td><input type="text" value="" id="input_z" class="number"></td>
-          </tr>
-        </table>
-
-        <h3>速度ベクトル</h3>
-        <table>
-          <tr>
-            <!-- 速度のx成分 -->
-            <td>vx</td>
-            <!-- vxを指定するスライダー -->
-            <td>
-              <div id="slider_vx" class="slider"></div>
-            </td>
-            <!-- 現在のvx -->
-            <td><input type="text" value="" id="input_vx" class="number"></td>
-          </tr>
-          <tr>
-            <!-- 速度のy成分 -->
-            <td>vy</td>
-            <!-- vyを指定するスライダー -->
-            <td>
-              <div id="slider_vy" class="slider"></div>
-            </td>
-            <!-- 現在のvy -->
-            <td><input type="text" value="" id="input_vy" class="number"></td>
-          </tr>
-          <tr>
-            <!-- 速度のz成分 -->
-            <td>vz</td>
-            <!-- vzを指定するスライダー -->
-            <td>
-              <div id="slider_vz" class="slider"></div>
-            </td>
-            <!-- 現在のvz -->
-            <td><input type="text" value="" id="input_vz" class="number"></td>
-          </tr>
-        </table>
-
-        <!-- ボタン -->
-        <div id="buttonFrame">
-          <input type="button" value="計算開始" id="startButton" />
-          <input type="button" value="一時停止" id="stopButton" />
-        </div>
-
-      </div>
     </div>
+    <input type="button" value="リセット" id="startButton"
+      style="margin: 20px auto; display: block; height: 50px; width: 200px;" />
   </div>
 </body>
 
