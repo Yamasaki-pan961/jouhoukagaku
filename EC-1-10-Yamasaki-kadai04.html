@@ -43,6 +43,7 @@
     ///////////////////////////////////////////////////////////////////////////
     var dt = 0.001;   //1フレームあたりの時間間隔
     var skip = 100;     //計算間引数
+    let step = 0;
     var g = 9.8;      //重力定数
 
     let sideWallWidth = 40;
@@ -54,9 +55,12 @@
     let input_key_buffer = new Array();
     let move = 1;
 
+    let score = 0;
+
     //一時停止フラグ
-    var restartFlag = false; //再計算フラグ
-    var stopFlag = true;     //一時停止フラグ
+    var stopFlag = true;
+    let restartFlag = false;
+    let gameOverFlag = false;
 
     //軌跡配列の初期化
     var trajectory = [];
@@ -68,14 +72,27 @@
       this.width = parameter.width;
       this.height = parameter.height;
       this.depth = racketDepth;
+      this.getL = function () {
+        return this.y - this.width / 2;
+      }
+      this.getR = function () {
+        return this.y + this.width / 2;
+      }
+      this.getT = function () {
+        return this.z + this.height / 2;
+      }
+      this.getB = function () {
+        return this.z - this.height / 2;
+      }
     }
 
-    let racket = new Racket({
+    const initParam = {
       y: 0,
       z: 20,
       width: 10,
       height: 10,
-    })
+    };
+    let racket = new Racket(initParam);
 
     ///////////////////////////////////
     // 球クラスの定義
@@ -100,6 +117,8 @@
       this.x_1;
       this.y_1;
       this.z_1;
+
+      this.wallBounded = false;
 
       //初期位置の計算
       this.calculateInitialCondition(dt);
@@ -145,7 +164,8 @@
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
-        if (Math.abs(this.x) > this.radius + frontWallRange) {
+        if (this.x > this.radius + frontWallRange) {
+          this.ballBounded = true;
           let next_vx = -this.vx;
           fx += (next_vx - this.vx) * this.mass / dt
         }
@@ -157,6 +177,24 @@
           let next_vz = -this.vz;
           fz += (next_vz - this.vz) * this.mass / dt
         }
+        if (this.x - this.radius < racket.x + racket.depth / 2 && this.x - this.radius > racket.x - racket.depth / 2 && racket.getL() < this.y && racket.getR() > this.y && racket.getB() < this.z && racket.getT() > this.z) {
+          if (this.ballBounded) {
+            score++;
+            let next_vx = -this.vx;
+            let next_vy = this.vy + 20 * (Math.random() - 0.5);
+            let next_vz = this.vz + 20 * (Math.random() - 0.3);
+            fx += (next_vx - this.vx) * this.mass / dt
+            fy += (next_vy - this.vy) * this.mass / dt
+            fz += (next_vz - this.vz) * this.mass / dt
+            this.ballBounded = false;
+          }
+        }
+
+        if (-this.x > this.radius + frontWallRange) {
+          stopFlag = true;
+          gameOverFlag = true;
+        }
+
         return { x: fx, y: fy, z: fz };
       },
       //ベルレ法による必要な初期値の計算
@@ -185,13 +223,16 @@
       }
     };
 
-    //球クラスのインスタンスの生成
-    var ball = new Ball({
+
+    const initBallParam = {
       radius: 2,  //球の半径
       mass: 1,                //質量
       x: 0, y: 0, z: 20,     //位置ベクトル
       vx: 20, vy: 0, vz: 0    //速度ベクトル
-    });
+    };
+
+    //球クラスのインスタンスの生成
+    var ball = new Ball(initBallParam);
 
     ////////////////////////////////////////////////////////////////////
     //jqPlotスタート関数
@@ -204,20 +245,28 @@
       //タブ切り替えインターフェースの実装
       $('#tabs').tabs({ selected: 0 /*, fx: { opacity: 'toggle', duration: 100} */ });
 
-      ////ボタンクリックとタブ切り替え時のイベントの設定////////////////////////////////
-      //計算開始ボタン
-      document.getElementById("startButton").addEventListener("click", function () {
-        //再計算用フラグを設定
-        restartFlag = true;
-      });
-
+      document.getElementById('startButton').addEventListener("click", function () {
+        if (!gameOverFlag) {
+          if (stopFlag) {
+            score = 0;
+            stopFlag = false;
+            document.getElementById('startButton').value = 'リセット'
+          } else {
+            stopFlag = true;
+            restartFlag = true;
+            document.getElementById('startButton').value = 'スタート'
+          }
+        } else {
+          stopFlag = true;
+          restartFlag = true;
+          gameOverFlag = false;
+          document.getElementById('startButton').value = 'スタート'
+        }
+      })
       document.onkeydown = function (e) {
         input_key_buffer[e.keyCode] = true;
       };
 
-      // ------------------------------------------------------------
-      // キーボードを離したときに実行されるイベント
-      // ------------------------------------------------------------
       document.onkeyup = function (e) {
         input_key_buffer[e.keyCode] = false;
       };
@@ -380,7 +429,7 @@
           scene.add(plane);
         }
       }
-      geometry = new THREE.CubeGeometry(200, 1, roofHeight*2);
+      geometry = new THREE.CubeGeometry(200, 1, roofHeight * 2);
       material = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
       plane = new THREE.Mesh(geometry, material);
       plane.position.set(0, sideWallWidth, 10);
@@ -395,6 +444,8 @@
       racketCube = new THREE.Mesh(geometry, material);
       racketCube.position.set(racket.x, racket.y, racket.z);
       scene.add(racketCube);
+      //球オブジェクトの影の生成元
+      racketCube.castShadow = true;
     }
 
     ////////////////////////////////////////////////////////////////////
@@ -410,14 +461,19 @@
     function loop() {
       //トラックボールによるカメラオブジェクトのプロパティの更新
       trackball.update();
-
+      var time = step * dt;
       //時刻の取得
       if (stopFlag == false) {
         for (var k = 0; k < skip; k++) {
+          step++;
+          time = step * dt;
           //球体の時間発展
           ball.timeEvolution(dt);
         }
-
+        trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
+        if (time > 2) {
+          trajectory.shift();
+        }
       }
 
       // 上が押されたとき
@@ -448,11 +504,6 @@
         }
       }
 
-      console.log(`x: ${racket.x} \n y: ${racket.x} \n z: ${racket.z}`);
-      //軌跡配列にデータを追加
-      trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
-
-
       //軌跡の描画
       var trajectoryGeometry = new THREE.Geometry();
       trajectoryGeometry.vertices = trajectory;
@@ -466,21 +517,16 @@
       sphere.position.set(ball.x, ball.y, ball.z);
       racketCube.position.set(racket.x, racket.y, racket.z);
 
-      //再スタートフラグのチェック
-      if (restartFlag == true) {
-
+      if (restartFlag) {
         restartFlag = false;
-        stopFlag = false;
-
-        //ボタン表示文字列の変更
-        document.getElementById("startButton").value = "再計算スタート";
+        ball = new Ball(initBallParam);
       }
 
       //クリアーカラーで初期化
       renderer.clear();
       //レンダリング
       renderer.render(scene, camera);
-
+      document.getElementById("score").innerText = score;
       scene.remove(lines);
       //「loop()」関数の呼び出し
       requestAnimationFrame(loop);
@@ -503,8 +549,14 @@
       <div id="canvas-frame" style="width: 1280px;height: 600px; display: block;"></div>
 
     </div>
-    <input type="button" value="リセット" id="startButton"
-      style="margin: 20px auto; display: block; height: 50px; width: 200px;" />
+    <div style="display: inline-flex; align-content: center; ">
+      <input type="button" value="スタート" id="startButton"
+        style="display: block; height: 50px; width: 200px; margin: 10px;" />
+
+      <p style="display: inline-block; margin: 10px; font-size: 40px;">十字キーで移動</p>
+      <p style="display: inline-block; margin: 10px; font-size: 40px;">　　　Score:</p>
+      <p style="display: inline-block; margin: 10px; font-size: 40px;" id="score"></p>
+    </div>
   </div>
 </body>
 
