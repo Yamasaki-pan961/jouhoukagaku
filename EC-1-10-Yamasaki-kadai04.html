@@ -42,22 +42,10 @@
     // 物理系の定義
     ///////////////////////////////////////////////////////////////////////////
     var dt = 0.001;   //1フレームあたりの時間間隔
-    var step = 0;    //ステップ数
     var skip = 100;     //計算間引数
-    var skip_data = 5;  //プロットデータ間引数
     var g = 9.8;      //重力定数
-
-
-    //時系列プロットデータ用配列
-    var data_x = [];  //x座標
-    var data_y = [];  //y座標
-    var data_z = [];  //z座標
-    var data_vx = []; //vx座標
-    var data_vy = []; //vy座標
-    var data_vz = []; //vz座標
-    var data_kinetic = [];   //運動エネルギー
-    var data_potential = []; //ポテンシャルエネルギー
-    var data_energy = [];    //力学的エネルギー
+    let sideWallWidth = 40;
+    let frontWallRange = 60;
 
     //一時停止フラグ
     var restartFlag = false; //再計算フラグ
@@ -92,31 +80,6 @@
 
       //初期位置の計算
       this.calculateInitialCondition(dt);
-
-      //プロットデータ配列の初期化
-      data_x = [];
-      data_y = [];
-      data_z = [];
-      data_vx = [];
-      data_vy = [];
-      data_vz = [];
-      data_kinetic = [];
-      data_potential = [];
-      data_energy = [];
-
-      //プロットデータ配列に初期値を代入
-      data_x.push([0, this.x]);
-      data_y.push([0, this.y]);
-      data_z.push([0, this.z]);
-      data_vx.push([0, this.vx]);
-      data_vy.push([0, this.vy]);
-      data_vz.push([0, this.vz]);
-
-      //初期力学的エネルギーの計算とプロットデータ配列に初期値を代入
-      var energy = this.calculateEnergy();
-      data_kinetic.push([0, energy.kinetic]);
-      data_potential.push([0, energy.potential]);
-      data_energy.push([0, energy.kinetic + energy.potential]);
 
     };
     Ball.prototype = {
@@ -159,11 +122,11 @@
         var fx = 0;
         var fy = 0;
         var fz = -this.mass * g;
-        if (Math.abs(this.x) > this.radius + 30) {
+        if (Math.abs(this.x) > this.radius + frontWallRange) {
           let next_vx = -this.vx;
           fx += (next_vx - this.vx) * this.mass / dt
         }
-        if (Math.abs(this.y) > this.radius + 30) {
+        if (Math.abs(this.y) > this.radius + sideWallWidth) {
           let next_vy = -this.vy;
           fy += (next_vy - this.vy) * this.mass / dt
         }
@@ -201,10 +164,10 @@
 
     //球クラスのインスタンスの生成
     var ball = new Ball({
-      radius: 5,  //球の半径
+      radius: 2,  //球の半径
       mass: 1,                //質量
-      x: 0, y: 0, z: 50,     //位置ベクトル
-      vx: 0, vy: 0, vz: 0    //速度ベクトル
+      x: 0, y: 0, z: 20,     //位置ベクトル
+      vx: 20, vy: 0, vz: 0    //速度ベクトル
     });
 
     ////////////////////////////////////////////////////////////////////
@@ -347,7 +310,7 @@
       //形状オブジェクトの宣言と生成
       var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
       //材質オブジェクトの宣言と生成
-      var material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x880000 });
+      var material = new THREE.MeshLambertMaterial({ color: 0x99FF00, ambient: 0x880000 });
       //球オブジェクトの生成
       sphere = new THREE.Mesh(geometry, material);
       //球オブジェクトのシーンへの追加
@@ -382,6 +345,15 @@
           scene.add(plane);
         }
       }
+      geometry = new THREE.CubeGeometry(200,5,40);
+      material  = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
+      plane = new THREE.Mesh(geometry, material);
+      plane.position.set(0,sideWallWidth,10);
+      scene.add(plane);
+
+      plane = new THREE.Mesh(geometry, material);
+      plane.position.set(0,-sideWallWidth,10);
+      scene.add(plane);
     }
 
     ////////////////////////////////////////////////////////////////////
@@ -392,28 +364,11 @@
       trackball.update();
 
       //時刻の取得
-      var time = step * dt;
       if (stopFlag == false) {
         for (var k = 0; k < skip; k++) {
-          step++;
-          time = step * dt;
-
           //球体の時間発展
           ball.timeEvolution(dt);
 
-          if (step % (skip * skip_data) == 0) {
-            //プロットデータ配列にデータを追加
-            data_x.push([time, ball.x]); //x座標
-            data_y.push([time, ball.y]); //y座標
-            data_z.push([time, ball.z]); //z座標
-            data_vx.push([time, ball.vx]); //vx
-            data_vy.push([time, ball.vy]); //vy
-            data_vz.push([time, ball.vz]); //vz
-            var energy = ball.calculateEnergy();
-            data_kinetic.push([time, energy.kinetic]);
-            data_potential.push([time, energy.potential]);
-            data_energy.push([time, energy.kinetic + energy.potential]);
-          }
         }
         //軌跡配列にデータを追加
         trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
