@@ -44,8 +44,15 @@
     var dt = 0.001;   //1フレームあたりの時間間隔
     var skip = 100;     //計算間引数
     var g = 9.8;      //重力定数
+
     let sideWallWidth = 40;
     let frontWallRange = 60;
+    let racketDepth = 5;
+    let racketX = - frontWallRange + 20;
+    let roofHeight = 40;
+
+    let input_key_buffer = new Array();
+    let move = 1;
 
     //一時停止フラグ
     var restartFlag = false; //再計算フラグ
@@ -53,6 +60,22 @@
 
     //軌跡配列の初期化
     var trajectory = [];
+
+    let Racket = function (parameter) {
+      this.x = racketX;
+      this.y = parameter.y;
+      this.z = parameter.z;
+      this.width = parameter.width;
+      this.height = parameter.height;
+      this.depth = racketDepth;
+    }
+
+    let racket = new Racket({
+      y: 0,
+      z: 20,
+      width: 10,
+      height: 10,
+    })
 
     ///////////////////////////////////
     // 球クラスの定義
@@ -187,6 +210,17 @@
         //再計算用フラグを設定
         restartFlag = true;
       });
+
+      document.onkeydown = function (e) {
+        input_key_buffer[e.keyCode] = true;
+      };
+
+      // ------------------------------------------------------------
+      // キーボードを離したときに実行されるイベント
+      // ------------------------------------------------------------
+      document.onkeyup = function (e) {
+        input_key_buffer[e.keyCode] = false;
+      };
     }
     ////////////////////////////////////////////////////////////////////
     // Three.jsスタート関数の定義
@@ -306,6 +340,7 @@
 
     //グローバル変数の宣言
     var sphere; //球オブジェクト
+    let racketCube;
     function initObject() {
       //形状オブジェクトの宣言と生成
       var geometry = new THREE.SphereGeometry(ball.radius, 20, 20);
@@ -345,20 +380,33 @@
           scene.add(plane);
         }
       }
-      geometry = new THREE.CubeGeometry(200,5,40);
-      material  = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
+      geometry = new THREE.CubeGeometry(200, 1, roofHeight*2);
+      material = new THREE.MeshLambertMaterial({ color: 0x999999, ambient: 0x050505 });
       plane = new THREE.Mesh(geometry, material);
-      plane.position.set(0,sideWallWidth,10);
+      plane.position.set(0, sideWallWidth, 10);
       scene.add(plane);
 
       plane = new THREE.Mesh(geometry, material);
-      plane.position.set(0,-sideWallWidth,10);
+      plane.position.set(0, -sideWallWidth, 10);
       scene.add(plane);
+
+      geometry = new THREE.CubeGeometry(racket.depth, racket.width, racket.height);
+      material = new THREE.MeshLambertMaterial({ color: 0xFF0000, ambient: 0x050505 });
+      racketCube = new THREE.Mesh(geometry, material);
+      racketCube.position.set(racket.x, racket.y, racket.z);
+      scene.add(racketCube);
     }
 
     ////////////////////////////////////////////////////////////////////
     // 無限ループ関数の定義
     ////////////////////////////////////////////////////////////////////
+    function KeyIsDown(key_code) {
+
+      if (input_key_buffer[key_code]) return true;
+
+      return false;
+    }
+
     function loop() {
       //トラックボールによるカメラオブジェクトのプロパティの更新
       trackball.update();
@@ -368,11 +416,42 @@
         for (var k = 0; k < skip; k++) {
           //球体の時間発展
           ball.timeEvolution(dt);
-
         }
-        //軌跡配列にデータを追加
-        trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
+
       }
+
+      // 上が押されたとき
+      if (KeyIsDown(38)) {
+        if (racket.z + racket.height / 2 < roofHeight) {
+          racket.z += move;
+        }
+      }
+
+      // 下が押されたとき
+      if (KeyIsDown(40)) {
+        if (racket.z - racket.height / 2 > 0) {
+          racket.z -= move;
+        }
+      }
+
+      // 左が押されたとき
+      if (KeyIsDown(37)) {
+        if (racket.y - racket.width / 2 > -sideWallWidth) {
+          racket.y -= move;
+        }
+      }
+
+      // 右が押されたとき
+      if (KeyIsDown(39)) {
+        if (racket.y + racket.width / 2 < sideWallWidth) {
+          racket.y += move;
+        }
+      }
+
+      console.log(`x: ${racket.x} \n y: ${racket.x} \n z: ${racket.z}`);
+      //軌跡配列にデータを追加
+      trajectory.push(new THREE.Vector3(ball.x, ball.y, ball.z));
+
 
       //軌跡の描画
       var trajectoryGeometry = new THREE.Geometry();
@@ -385,6 +464,7 @@
 
       //球オブジェクトの位置ベクトルを設定
       sphere.position.set(ball.x, ball.y, ball.z);
+      racketCube.position.set(racket.x, racket.y, racket.z);
 
       //再スタートフラグのチェック
       if (restartFlag == true) {
