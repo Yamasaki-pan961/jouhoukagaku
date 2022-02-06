@@ -35,7 +35,6 @@
     window.addEventListener("load", function () {
       resizeTo(850, 610);
       initEvent();  //イベントの準備
-      plotStart();  //jqPlotスタート関数の実行
       threeStart(); //Three.jsのスタート関数の実行
     });
 
@@ -48,10 +47,6 @@
     var skip_data = 5;  //プロットデータ間引数
     var g = 9.8;      //重力定数
 
-    //Plot2D用オブジェクト
-    var plot2D_position; //位置ベクトル
-    var plot2D_velocity; //速度ベクトル
-    let plot2D_energy;
 
     //時系列プロットデータ用配列
     var data_x = [];  //x座標
@@ -215,91 +210,6 @@
     ////////////////////////////////////////////////////////////////////
     //jqPlotスタート関数
     ////////////////////////////////////////////////////////////////////
-    function plotStart() {
-      //座標グラフ描画
-      plot2D_position = new Plot2D("canvas-frame_position");
-      //オプションの設定
-      plot2D_position.options.axesDefaults.tickOptions.formatString = ''; //目盛フォーマット
-      plot2D_position.options.axes.xaxis.label = "time [s]";              //x軸ラベル
-      plot2D_position.options.axes.yaxis.label = "position [m]";          //y軸ラベル
-      plot2D_position.options.axes.yaxis.labelOptions = { angle: -90 };   //ラベル回転角
-      plot2D_position.options.axes.xaxis.min = 0;                         //目盛の最小値
-      plot2D_position.options.legend.show = true;                         //凡例の有無
-      plot2D_position.options.legend.location = 'ne';                     //凡例の位置 
-      var series = []; //データ列オプション用配列
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "x座標",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "y座標",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "z座標",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      plot2D_position.options.series = series; //データ列オプションの代入
-
-      //速度グラフ描画
-      plot2D_velocity = new Plot2D("canvas-frame_velocity");
-      //オプションの設定
-      plot2D_velocity.options.axesDefaults.tickOptions.formatString = ''; //目盛フォーマット
-      plot2D_velocity.options.axes.xaxis.label = "time [s]";              //x軸ラベル
-      plot2D_velocity.options.axes.yaxis.label = "velocity [m/s]";         //y軸ラベル
-      plot2D_velocity.options.axes.yaxis.labelOptions = { angle: -90 };   //ラベル回転角
-      plot2D_velocity.options.axes.xaxis.min = 0;                         //目盛の最小値
-      plot2D_velocity.options.legend.show = true;                         //凡例の有無
-      plot2D_velocity.options.legend.location = 'ne';                     //凡例の位置 
-      series = []; //データ列オプション用配列
-      series.push({
-        showLine: true,           //線描画の有無
-        label: "vx",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,            //線描画の有無
-        label: "vy",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,           //線描画の有無
-        label: "vz",              //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      plot2D_velocity.options.series = series; //データ列オプションの代入
-
-
-      //エネルギーグラフ描画
-      plot2D_energy = new Plot2D("canvas-frame_energy");
-      plot2D_energy.options.axesDefaults.tickOptions.formatString = '';
-      plot2D_energy.options.axes.xaxis.label = "time [s]";
-      plot2D_energy.options.axes.yaxis.label = "Energy [J]";
-      plot2D_energy.options.axes.yaxis.labelOptions = { angle: -90 };
-      plot2D_energy.options.axes.xaxis.min = 0;
-      plot2D_energy.options.legend.show = true;      //凡例の有無
-      plot2D_energy.options.legend.location = 'ne';  //凡例の位置 
-      series = []; //データ列オプション用配列
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "運動エネルギー",     //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,              //線描画の有無
-        label: "ポテンシャルエネルギー", //凡例の設定
-        markerOptions: { show: true } //点描画の有無
-      });
-      series.push({
-        showLine: true,               //線描画の有無
-        label: "力学的エネルギー",    //凡例の設定
-        markerOptions: { show: false } //点描画の有無
-      });
-      plot2D_energy.options.series = series;
-    }
 
     ////////////////////////////////////////////////////////////////////
     // イベント準備関数
@@ -410,57 +320,6 @@
           //一時停止フラグを設定
           stopFlag = true;
         }
-      });
-
-      //1つ目のタブに切り替え時
-      document.getElementById("tabList").getElementsByTagName("a").item(0).addEventListener("click", function () {
-        //一時停止フラグを設定
-        //stopFlag = false;
-      });
-      //2つ目のタブに切り替え時
-      document.getElementById("tabList").getElementsByTagName("a").item(1).addEventListener("click", function () {
-        //「pushData」メソッドによるデータ列の初期化
-        plot2D_position.clearData();
-
-        //「pushData」メソッドによるデータの追加
-        plot2D_position.pushData(data_x); //x座標
-        plot2D_position.pushData(data_y); //y座標
-        plot2D_position.pushData(data_z); //z座標
-
-        plot2D_position.linerPlot();   //メソッドによる再描画
-
-        //一時停止フラグを設定
-        stopFlag = true;
-      });
-      //3つ目のタブに切り替え時
-      document.getElementById("tabList").getElementsByTagName("a").item(2).addEventListener("click", function () {
-        //「pushData」メソッドによるデータ列の初期化
-        plot2D_velocity.clearData();
-
-        //「pushData」メソッドによるデータの追加
-        plot2D_velocity.pushData(data_vx); //vx
-        plot2D_velocity.pushData(data_vy); //vy
-        plot2D_velocity.pushData(data_vz); //vz
-
-        plot2D_velocity.linerPlot();   //メソッドによる再描画
-
-        //一時停止フラグを設定
-        stopFlag = true;
-      });
-      //4つ目のタブに切り替え時
-      document.getElementById("tabList").getElementsByTagName("a").item(3).addEventListener("click", function () {
-        plot2D_energy.clearData();
-
-        //「pushData」メソッドによるデータの追加
-        plot2D_energy.pushData(data_kinetic);   //運動エネルギー
-        plot2D_energy.pushData(data_potential); //ポテンシャルエネルギー
-        plot2D_energy.pushData(data_energy);    //力学的エネルギー
-        plot2D_energy.linerPlot();              //メソッドによる再描画
-
-        //ボタンの表示文字列の変更
-        document.getElementById("stopButton").value = "停止解除";
-        //一時停止フラグを設定
-        stopFlag = true;
       });
     }
     ////////////////////////////////////////////////////////////////////
@@ -724,9 +583,6 @@
     <!-- タブメニューリスト領域 -->
     <ul id="tabList">
       <li><a href="#tab1">仮想３次元空間</a></li>
-      <li><a href="#tab2">時系列プロット(位置ベクトル)</a></li>
-      <li><a href="#tab3">時系列プロット(速度ベクトル)</a></li>
-      <li><a href="#tab4">時系列プロット(力学的エネルギー)</a></li>
     </ul>
 
     <!-- タブコンテンツ領域 -->
@@ -858,23 +714,6 @@
 
       </div>
     </div>
-
-    <!-- タブコンテンツ領域 -->
-    <div id="tab2" class="inner">
-      <!-- キャンバスフレーム領域-->
-      <div id="canvas-frame_position" class="plotFrame"></div>
-    </div>
-    <!-- タブコンテンツ領域 -->
-    <div id="tab3" class="inner">
-      <!-- キャンバスフレーム領域-->
-      <div id="canvas-frame_velocity" class="plotFrame"></div>
-    </div>
-    <!-- タブコンテンツ領域 -->
-    <div id="tab4" class="inner">
-      <!-- キャンバスフレーム領域-->
-      <div id="canvas-frame_energy" class="plotFrame"></div>
-    </div>
-
   </div>
 </body>
 
